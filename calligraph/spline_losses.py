@@ -47,7 +47,7 @@ def make_bbox_loss(box, pad = 5):
     y_min = y_min + pad
     y_max = y_max - pad
 
-    func = torch.nn.functional.softplus # torch.\setlength{\jot}{3pt}
+    func = torch.nn.functional.softplus
     def bbox_loss(paths):
         loss = 0.0
         n = 0
@@ -59,16 +59,10 @@ def make_bbox_loss(box, pad = 5):
                 points = path.get_points()
             x = points[:, 0]
             y = points[:, 1]
-
-            # Penalize points below x_min or above x_max
             x_lo = func(x_min - x)
             x_hi = func(x - x_max)
-
-            # Penalize points below y_min or above y_max
             y_lo = func(y_min - y)
             y_hi = func(y - y_max)
-
-            # Sum
             loss += torch.sum((x_lo + x_hi + y_lo + y_hi))
             n += len(x)
 
@@ -118,7 +112,8 @@ def make_bending_loss(subd):
 
 
 
-## Overlap loss
+### Overlap loss
+
 def compute_pixel_color(luminosity, alpha, num_layers, background_lumi):
     """
     Premultiplied alpha pixel luminosity (Porter and Duff)
@@ -140,10 +135,8 @@ def compute_pixel_color(luminosity, alpha, num_layers, background_lumi):
 
 
 def make_overlap_loss(alpha, lumi=0.0, bg_lumi=1.0, blur=2, subtract_widths=False):
-
     func = torch.relu
     #func = lambda x:  torch.nn.functional.softplus(x, 5)
-
     class Loss:
         def __init__(self):
             pass
