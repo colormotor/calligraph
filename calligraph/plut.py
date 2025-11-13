@@ -1,15 +1,6 @@
 '''
-  _   _   _   _   _   _   _   _   _   _   _
- / \ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \
-( P | O | L | Y | G | O | N | S | O | U | P )
- \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/
-
-Plotter-friendly graphics utilities
-© Daniel Berio (@colormotor) 2021 - ...
-
-plut - visualization utils (matplotlib-based)
+Matplotlib helpers
 '''
-
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

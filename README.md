@@ -22,7 +22,7 @@ Then proceed with the following dependencies. If using conda/mamba you may want 
     mamba install numpy scipy matplotlib opencv scikit-image
 
 making sure your environment is active.
-
+    
 ## Dependencies
 -   Install NumPy, SciPy, matplotlib, OpenCV (using mamba as above or pip)
 -   Install [torch/torchvision](https://pytorch.org/get-started/locally/)
