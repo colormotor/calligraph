@@ -32,12 +32,7 @@ import time
 device = config.device
 dtype = torch.float32
 
-def to_batch(im):
-    im = im.unsqueeze(0)
-    im = im.unsqueeze(-1)
-    im = im.permute((3, 2, 0, 1))
-    return im
-
+# Color conversion utils
 def rgb2lab(im):
     print(im.shape)
     im = to_batch(im)
@@ -54,36 +49,36 @@ def lab2rgb(im):
     print('2rgb', res.shape)
     return res
 
+def to_batch(im):
+    im = im.unsqueeze(0)
+    im = im.unsqueeze(-1)
+    im = im.permute((3, 2, 0, 1))
+    return im
 
 def to_palette(im, n):
     im = im.quantize(n, method=Image.Quantize.MEDIANCUT, kmeans=n).convert('RGB')
     colors = im.getcolors()
     return [np.array(c[1])/255 for c in colors]
 
+# Config
 def params():
     output_path = './outputs'
     save = True
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/hk4.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/ada2.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/dog3.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/hk2.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/bach1.jpg')
-    #filename = './data/spock256.jpg' #utah.jpg' #utah3.jpg'
+    filename = './data/bach.jpg'
 
     minw, maxw = 0.5, 2  # stroke width range
-    degree = 5 #5 #5
-    deriv = 3
-    multiplicity = 1
-    b_spline = True
-    pspline = False
-    ref_size_factor = 100.0
+    degree = 5 # Spline degree
+    deriv = 3  # Smoothing degrees
+    multiplicity = 1 # Keypoint multiplicity
+    b_spline = 1
+    pspline = 0 # If 1 (true) use discrete penalized spline_points
+
     num_voronoi_points = 50
     ds = 5
     lr_shape = 2.0
     lr_min_scale = 0.7
     lr_color = 1e-2
     num_opt_steps = 300
-    schedule_decay_factor = 1.5
 
     use_color = 0
 
@@ -111,6 +106,8 @@ def params():
     palette = torch.linspace(0, 1, K+1, device=device)[:-1]
     palette = torch.linspace(0, 1, K, device=device)
     palette = torch.vstack([palette]*chans).T
+
+    palette_file = './data/palettes/ 5
     pfiles = fs.files_in_dir('/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes', 'ase')
     palette_file = pfiles[8]
     palette_file = '/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes/Jamba Juice.ase' #Honey Pot.ase'
@@ -190,8 +187,6 @@ box = geom.make_rect(0, 0, w, h)
 verbose = False
 
 overlap = False
-ref_size = w/cfg.ref_size_factor
-offset_variance = [ref_size, ref_size]
 closed = True
 
 diffvg_utils.cfg.one_channel_is_alpha = False
