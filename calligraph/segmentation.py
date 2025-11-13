@@ -312,7 +312,6 @@ class Hook:
         return self.data.grad
 
 def clip_saliency(image, prompt='', model='ViT-B/32', layers=[]):
-    
     # https://arxiv.org/abs/2304.05653
     from skimage.transform import resize
     from .contrib.CLIPExplain import clip

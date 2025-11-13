@@ -3,29 +3,44 @@ import json, os, sys
 import numpy as np
 import dataclasses
 
+
 def load_json(path):
     import codecs
+
     try:
-        with codecs.open(path, encoding='utf8') as fp:
+        with codecs.open(path, encoding="utf8") as fp:
             data = json.load(fp)
         return data
     except IOError as err:
         print(err)
-        print ("Unable to load json file:" + path)
+        print("Unable to load json file:" + path)
         return {}
 
 
 class CustomEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
+    """Special json encoder for numpy types"""
+
     def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-            np.int16, np.int32, np.int64, np.uint8,
-            np.uint16, np.uint32, np.uint64)):
+        if isinstance(
+            obj,
+            (
+                np.int_,
+                np.intc,
+                np.intp,
+                np.int8,
+                np.int16,
+                np.int32,
+                np.int64,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint64,
+            ),
+        ):
             return int(obj)
-        elif isinstance(obj, (np.float64, np.float16, np.float32,
-            np.float64)):
+        elif isinstance(obj, (np.float64, np.float16, np.float32, np.float64)):
             return float(obj)
-        elif isinstance(obj,(np.ndarray,)): #### This is the fix
+        elif isinstance(obj, (np.ndarray,)):  #### This is the fix
             return obj.tolist()
         elif dataclasses.is_dataclass(obj):
             return dataclasses.asdict(obj)
@@ -33,10 +48,10 @@ class CustomEncoder(json.JSONEncoder):
 
 
 def save_json(data, path, encoder=CustomEncoder):
-    with open(path, 'w') as fp:
-        #default = lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
-        #The above breaks
-        json.dump(data, fp, indent=4, sort_keys=True, cls=encoder) #, default=default)
+    with open(path, "w") as fp:
+        # default = lambda o: f"<<non-serializable: {type(o).__qualname__}>>"
+        # The above breaks
+        json.dump(data, fp, indent=4, sort_keys=True, cls=encoder)  # , default=default)
 
 
 def create_dir(dir):
@@ -53,8 +68,7 @@ def files_in_dir(path, exts=[], nohidden=True):
     files = []
     path = os.path.expanduser(path)
     for file in os.listdir(path):
-        if (nohidden and
-            os.path.basename(file).startswith('.')):
+        if nohidden and os.path.basename(file).startswith("."):
             continue
         if exts:
             if type(exts) != list:
@@ -85,6 +99,7 @@ def filename_ext(path):
 
 def download_file_once(url, local_path):
     import requests
+
     local_path = os.path.expanduser(local_path)
 
     # Check if the file already exists
@@ -96,7 +111,7 @@ def download_file_once(url, local_path):
         response.raise_for_status()  # Raise an error for bad status codes
 
         # Save the file in chunks
-        with open(local_path, 'wb') as file:
+        with open(local_path, "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
         print("Download complete.")
@@ -105,21 +120,20 @@ def download_file_once(url, local_path):
 
 
 def load_gml(path, rotate=False, flip_vertical=False, get_timesteps=False):
+    """Parse a GML (Graffiti markup language) file"""
+    # f = open(path, 'r')
+    data = load_json(path)  # json.loads(f.read())
 
-    ''' Parse a GML file '''
-    #f = open(path, 'r')
-    data = load_json(path) #json.loads(f.read())
-
-    paths = data['gml']['tag']['drawing']['stroke']
+    paths = data["gml"]["tag"]["drawing"]["stroke"]
     # tags = data['gml_keywords'] if 'gml_keywords' in data else 'none'
     # if 'txt' in data:
     #     txt = data['txt']
     #     print('Found text: ' + txt)
     # else:
     #     txt = 'unknown'
-    txt = 'unknown'
+    txt = "unknown"
     tags = []
-    #info = {'id':data['id'], 'tags':tags, 'txt':txt}
+    # info = {'id':data['id'], 'tags':tags, 'txt':txt}
 
     S = []
     T = []
@@ -132,18 +146,18 @@ def load_gml(path, rotate=False, flip_vertical=False, get_timesteps=False):
     for i, path in enumerate(paths):
         try:
             if rotate:
-                P = [np.array( [float(pt['y']), -float(pt['x'])] ) for pt in path['pt'] ]
+                P = [np.array([float(pt["y"]), -float(pt["x"])]) for pt in path["pt"]]
             else:
-                P = [np.array( [float(pt['x']), float(pt['y'])] ) for pt in path['pt'] ]
+                P = [np.array([float(pt["x"]), float(pt["y"])]) for pt in path["pt"]]
             if get_timesteps:
-                t = np.array([float(pt['t']) for pt in path['pt']])
+                t = np.array([float(pt["t"]) for pt in path["pt"]])
                 T.append(t)
             P = np.array(P).T
             if flip_vertical:
-               P[1,:] = -P[1,:]
+                P[1, :] = -P[1, :]
             S.append(P.T)
         except:
-            print('corrupt path')
+            print("corrupt path")
 
     if get_timesteps:
         return S, T

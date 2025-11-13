@@ -29,25 +29,19 @@ device = config.device
 dtype = torch.float32
 
 
-
 def params():
     verbose = 0
-    has_dropbox = os.path.isdir(os.path.expanduser('~/Dropbox/transfer_box/real'))
-    if has_dropbox:
-        output_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/outputs/'
-    else:
-        output_path = './generated/tests'
+    output_path = './generated/tests'
 
-    text = 'G' #'T' #'R' #'R' #'G'
+    text = 'G'
     size = 256
     padding = 15
-
     font = "./data/fonts/UnifrakturMaguntia-Regular.ttf"
     image_path = "./data/spock.jpg"
 
     minw, maxw = 0.0, 3.5  # stroke width range
-    degree = 5 #5
-    deriv = 3 #3
+    degree = 5
+    deriv = 3
     multiplicity = 1
     b_spline = 1
     pspline = 0
@@ -56,20 +50,14 @@ def params():
     catmull = 1
     ref_size_factor = 0.5
     fill = 1
-    closed = 0 #True #False #True
+    closed = 0
     if not closed:
         fill = 0
     seed = 133
-    alpha =  1 #0.5 #0.5 #0.5 # 1.0 #0.5 #0.5
-    image_alpha = 0.5 #6 #5 #0.6 #0.45 #5 #5 #4 #5 #5 #0.4
-
-    ablation = 'x'
-    suffix = text
-
+    alpha =  1
+    image_alpha = 0.5
 
     style_img = './data/chinese.jpg'
-
-    #style_img = './data/style-picasso-1.jpg'
     single_path = 1
 
     # For single paths
@@ -79,30 +67,19 @@ def params():
     num_vertices_per_path = 25
     spread_radius = 15
 
-    lr_shape = 2.0 #1 #2.0 #1.5 #1.5 #1.0 #2.0
-    lr_width = 0.3 # 0.5 #0.1 #25
+    lr_shape = 2.0
+    lr_width = 0.3
+    num_opt_steps = 300
 
-    num_opt_steps = 300 # 500
-    schedule_decay_factor = 1.5
-
-    smoothing_w = 30 #1 #10 #50 #500 #100 # 100 #500 #100 #10 #10.0
+    smoothing_w = 30
     use_clipag = 1
-    style_w = 10.0 #10.0 #0.3 #5 #1.0
-    distortion_scale = 0.3 #0.5 #0 #0.3 #5 #5 #0.25 #0.0 #5 #0
-    patch_size = 128 #64 #128 # 128 #64
-    overlap_w = 0 #1000.0
+    style_w = 0
+    distortion_scale = 0.3
+    patch_size = 128
     blur = 0
-    if overlap_w > 0:
-        alpha = 0.5
-
-    repulsion_subd = 10 #5
-    repulsion_w = 0 #100 #1000 #3000 # 500
-    if not closed:
-        repulsion_w = 0
-    repulsion_d = 10
 
     mse_w = 20.0
-    mse_mul = 1 #0.5 # Factor multiplying each mse blur level (> 1 emph low freq)
+    mse_mul = 1
     sw = 2.0
     vary_width = 1
 
@@ -117,38 +94,18 @@ output_path = cfg.output_path
 if not cfg.save:
     output_path = '___'
 
-cfg.ablation = cfg.ablation.lower()
-if 'r' in cfg.ablation:
-    cfg.repulsion_w = 0.0
-    cfg.resolve_self_ins_every = 0
-if 's' in cfg.ablation:
-    cfg.smoothing_w = 0.0
-if 'o' in cfg.ablation:
-    cfg.style_w = 0.0
-if 'b' in cfg.ablation:
-    cfg.b_spline = 0
-if cfg.ablation:
-    cfg.suffix += '_abl-' + cfg.ablation
-
-if not cfg.has_dropbox:
-    print("Running remote. Init dropbox dir")
-    cfg.headless = 1
-    cfg.dropbox_folder = '/transfer_box/igor/calligraph/outputs'
-
-saver = util.SaveHelper(__file__, output_path, use_wandb=False,
-                        dropbox_folder=cfg.dropbox_folder,
+saver = util.SaveHelper(__file__, output_path,
                         suffix=cfg.suffix,
                         cfg=cfg)
 
 if cfg.text:
     input_img, outline = plut.font_to_image(cfg.text, image_size=(cfg.size, cfg.size), padding=cfg.padding,
-                                   font_path=cfg.font, return_outline=True)
+                                            font_path=cfg.font, return_outline=True)
     outline = geom.fix_shape_winding(outline)
     img = np.array(input_img)/255
     holes = geom.get_holes(outline)
 else:
     input_img = Image.open(cfg.image_path).convert('L').resize((cfg.size, cfg.size))
-
     img = np.array(input_img)/255
     img = segmentation.xdog(img, sigma=2.5, k=7)
     holes = []
@@ -157,11 +114,6 @@ h, w = img.shape
 
 style_img = Image.open(cfg.style_img).convert('L').resize((512, 512))
 target_img = 1-(1.0-img)*(cfg.alpha*cfg.image_alpha)
-
-def add_multiplicity(Q, noise=0.0):
-    Q = np.kron(Q, np.ones((cfg.multiplicity, 1)))
-    return Q + np.random.uniform(-noise, noise, Q.shape)
-
 
 ##############################################
 # Settings

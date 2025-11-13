@@ -747,14 +747,14 @@ class SDSLoss(StableDiffusion):
         if self.augment > 0:
             x_aug = []
             for _ in range(self.augment):
-                x_aug.append(self.augment_trans(img)) #torch.cat([self.augment_trans(img), self.augment_trans(img)])
+                x_aug.append(self.augment_trans(img))
             x_aug = torch.cat(x_aug, dim=0)
             image_cond = torch.cat([image_cond]*self.augment, dim=0)
         else:
             x_aug = img
 
         with util.perf_timer('Encoding'):
-            latent_z = self.encode_images(x_aug) #self.prepare_latents(x_aug).to(self.weights_dtype)
+            latent_z = self.encode_images(x_aug)
 
         step_ratio = None
         if step is not None and num_steps is not None:
