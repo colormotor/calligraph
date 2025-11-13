@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+'''
+)   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+'''
+
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance

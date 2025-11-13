@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-# FROM https://github.com/nimaid/python-tspart
+"""
+)   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+Mostly adpated from https://github.com/nimaid/python-tspart
+"""
 
 import numpy as np
 import scipy.spatial

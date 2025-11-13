@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+'''
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+File system utilities
+'''
+
 import json, os, sys
 import numpy as np
 import dataclasses

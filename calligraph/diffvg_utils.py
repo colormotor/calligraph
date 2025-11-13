@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Utilities wrapping diffvg for facilitating differentiable rendering of more
+"""
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+Utilities wrapping diffvg for facilitating differentiable rendering of more
 complex primitives Different shapes derive from the Shape class, and can be
 added to a Scene object. Shape parameters can be set as a tuple, with first
 parameter specifying the initial value (can be numpy or list) and second value a
