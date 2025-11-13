@@ -85,7 +85,6 @@ def params():
     return locals()
 
 
-
 # Parse command line and update parameters
 cfg = util.ConfigArgs(params())
 
@@ -121,7 +120,6 @@ startup_paths, _ = stroke_init.init_path_tsp(1-img, num_points, closed=cfg.close
 print("Done")
 # Add multiplicity
 startup_paths = [np.kron(P, np.ones((cfg.multiplicity, 1))) for P in startup_paths]
-
 
 ##############################################
 # Create the scene

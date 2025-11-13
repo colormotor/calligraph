@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
-""" Loss functions for image comparison
-Adapted from:
+"""
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+Loss functions for image comparison
+
+TODO what?? Adapted from:
 - https://github.com/jiupinjia/stylized-neural-painting
 """
+
 import importlib
 import torch
 from torch.autograd import Variable

@@ -2,6 +2,21 @@
 Code for the paper:
 ### Neural Image Abstraction Using Long Smoothing B-Splines
 
+If you use this code for academic purposes please cite:
+
+
+``` bibtex
+@article{NeurSplines-25,
+	title = {Neural Image Abstraction using Long Smoothing B-Splines},
+	author = {Daniel Berio and Michael Stroh and Sylvain Calinon and Frederic Fol Leymarie and Oliver Deussen and Ariel Shamir },
+	journal = {ACM Transactions on Graphics (SIGGRAPH Asia 2025 Conference Proceedings)},
+	year = {2025},
+	volume = {44},
+	Number = {6},
+	pages = {Accepted},
+}
+```
+
 ## Conda (recommended)
 
 The ideal way to get this working is installing the conda/mamba package manager through miniforge. On Mac/Linux, from a terminal do
