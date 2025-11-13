@@ -58,7 +58,6 @@ def params():
     image_alpha = 0.5
 
     style_img = './data/chinese.jpg'
-    single_path = 1
 
     # For single paths
     point_density = 0.015 #0.003 # 0.015
@@ -95,21 +94,16 @@ if not cfg.save:
     output_path = '___'
 
 saver = util.SaveHelper(__file__, output_path,
-                        suffix=cfg.suffix,
                         cfg=cfg)
 
 if cfg.text:
     input_img, outline = plut.font_to_image(cfg.text, image_size=(cfg.size, cfg.size), padding=cfg.padding,
                                             font_path=cfg.font, return_outline=True)
-    outline = geom.fix_shape_winding(outline)
     img = np.array(input_img)/255
-    holes = geom.get_holes(outline)
 else:
     input_img = Image.open(cfg.image_path).convert('L').resize((cfg.size, cfg.size))
     img = np.array(input_img)/255
-    img = segmentation.xdog(img, sigma=2.5, k=7)
-    holes = []
-
+    
 h, w = img.shape
 
 style_img = Image.open(cfg.style_img).convert('L').resize((512, 512))
@@ -121,69 +115,12 @@ background_image = np.ones((h, w))
 
 ##############################################
 # Initialization paths
-
-def init_path_tsp(img, n, **kwargs):
-    from calligraph import tsp_art
-    density_map = 1-img
-    points = tsp_art.weighted_voronoi_sampling(density_map, n, nb_iter=50)
-    print("Density done, tsp now")
-    # Find top left point
-    n = len(points)
-    if cfg.closed:
-        P = [tuple(p) for p in points]
-        # sorted according to x,y
-        I = sorted(list(range(n)), key=lambda i: P[i])
-        points = np.array([points[i] for i in I])
-    else:
-        points = np.array(points)
-    # TSP func assumes first and last points are fixed if cylce is True and end_to_end is True
-    I = tsp_art.heuristic_solve(points, time_limit_minutes=1/10, cycle=cfg.closed, end_to_end=not cfg.closed) #, logging=True, verbose=True)
-    #P = points
-    P = points[I]
-    return np.hstack([P, np.ones((len(P), 1))*cfg.sw])
-
-
-def init_path_weight(img, num_paths, subd, radius):
-    from calligraph import tsp_art
-    density_map = 1-img
-    points = tsp_art.weighted_voronoi_sampling(density_map, num_paths, nb_iter=30)
-    paths = []
-    for p in points:
-        blob = []
-        for t in np.linspace(0, np.pi*2, subd, endpoint=False):
-            blob.append(p + np.array([np.cos(t), np.sin(t)])*np.random.uniform(0.2, 1.0)*radius)
-        paths.append(np.array(blob))
-    return [np.hstack([P, np.ones((len(P), 2))]) for P in paths]
-
-
-
-if not cfg.single_path:
-    startup_paths = init_path_weight(img, cfg.num_paths,
-                                     cfg.num_vertices_per_path,
-                                     cfg.spread_radius)
-
-else:
-    num_points = int(np.sum(1-img)*cfg.point_density)
-    startup_paths = [init_path_tsp(img, num_points)]
-    if sum(holes):
-        box = geom.make_rect(0, 0, w, h)
-
-        for P, hole in zip(outline, holes):
-            if hole:
-                rast = imaging.ShapeRasterizer(box, 256)
-                rast.fill_shape(P)
-                himg = 1-rast.get_image()/255
-                # plut.figure_pixels(w, h)
-                # plut.fill(P, 'k')
-                # plut.setup()
-                # himg = np.array(plut.figure_image(close=True).convert('L'))/255
-                num_points = max(5, int(np.sum(1-himg)*cfg.point_density))
-                print('nump', num_points)
-                #pdb.set_trace()
-
-                startup_paths += [init_path_tsp(himg, num_points)]
+num_points = int(np.sum(1-img)*cfg.point_density)
+startup_paths, _ = stroke_init.init_path_tsp(img, num_points, closed=cfg.closed, startup_w=cfg.sw)
+    
 print("Done")
-startup_paths = [add_multiplicity(P) for P in startup_paths]
+# Add multiplicity
+startup_paths = [np.kron(P, np.ones((cfg.multiplicity, 1))) for P in startup_paths]
 
 
 ##############################################
@@ -225,6 +162,7 @@ scene.add_shapes(paths, stroke_color=([cfg.alpha], False), fill_color=fill_color
 ##############################################
 # Optimization
 
+opt = diffvg_utils.SceneOptimizer
 Opt = lambda params, lr: torch.optim.Adam(params, lr, betas=(0.8, 0.999))
 
 optimizers = [Opt(scene.get_points(), lr=cfg.lr_shape)]
@@ -247,11 +185,6 @@ losses.add('mse',
 if cfg.degree > 3 and cfg.b_spline:
     losses.add('deriv',
                spline_losses.make_deriv_loss(cfg.deriv, w), cfg.smoothing_w)
-
-losses.add('repulsion',
-               spline_losses.make_repulsion_loss(15, False, dist=5, signed=True), cfg.repulsion_w)
-overlap_loss = spline_losses.make_overlap_loss(cfg.alpha, blur=cfg.blur, subtract_widths=False)
-losses.add('overlap', overlap_loss, cfg.overlap_w) # 10000) #1000.0)
 
 losses.add('bbox',
            spline_losses.make_bbox_loss(geom.make_rect(0, 0, w, h)), 1.0)
