@@ -157,7 +157,6 @@ scene.add_shapes(paths, stroke_color=([cfg.alpha], False), fill_color=fill_color
 ##############################################
 # Optimization
 
-bg = np.ones((h, w))
 params = [(scene.get_points(), cfg.lr_pos)]
 if cfg.vary_width:
     params += [(scene.get_stroke_widths(), cfg.lr_width)]

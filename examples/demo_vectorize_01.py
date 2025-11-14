@@ -84,14 +84,18 @@ def params():
     clip_semantic_w = 0.0
     clip_model = 'CLIPAG'
     clip_layer_weights = [(2, 1.0), (3, 1.0), (6, 1.0)]
-    clipasso = False
+    clipasso = True
     clip_w = 300.0
     semantic_w = 0.0
 
     sds = not clipasso
     sds_w = 1.0
     t_min, t_max = 0.5, 0.98
-    cond_scale=0.51
+
+    cond_scale = 0.7 #0.8 #6 #4 #0.7 #9 #4
+    guess_mode = True
+    ip_scale = 0.9 #0.5 #0.2 #0.9 #0.4 #0.9
+
     grad_method = 'sds'
     grad_method = 'ism'
 
@@ -250,16 +254,8 @@ for P, clr in zip(startup_paths, colors):
 # Create logits for palette
 num_colors = len(startup_paths)
 num_colors += 1
-#color_logits = torch.tensor(initial_logits, device=device)+ torch.randn((num_colors, cfg.K), device=device)*0.1
 color_logits = torch.randn((num_colors, K), device=device)*0.5
 color_logits.requires_grad = True
-# with torch.no_grad():
-#     color_logits.data.clamp_(0.0, 1.0)
-
-#ref_size = np.max([geom.chord_length(P[:,:2]) for P in startup_paths])
-
-# Opt = torch.optim.Adam #Adam
-# Opt = lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.999)) #, eps=1e-6)
 
 params = [(scene.get_points(), cfg.lr_shape), 
           ([color_logits], cfg.lr_color)]
@@ -269,21 +265,8 @@ opt = diffvg_utils.SceneOptimizer(scene,
                                   lr_min_scale=cfg.lr_min_scale)
 
 
-
-# optimizers = [Opt(scene.get_points(), lr=cfg.lr_shape), #1*lrscale),
-#               Opt([color_logits], lr=cfg.lr_color),
-#               #Opt(scene.get_fill_colors(),  lr=cfg.lr_color),
-#               # Opt(scene.get_stroke_widths(), lr=0.5*lrscale)
-#               ]
-
-
-# schedulers = [util.step_cosine_lr_scheduler(opt, 0.0, cfg.lr_min_scale, cfg.num_opt_steps) for opt in optimizers]
-
 ##############################################
 # Losses
-
-
-losses = util.MultiLoss(verbose=verbose)
 opt.add_loss('mse',
                  image_losses.MultiscaleMSELoss(rgb=False), cfg.mse_w,
                  inputs=('im', 'input_img', 'mse_mul'))
@@ -331,12 +314,17 @@ if cfg.sds:
                      t_range=[cfg.t_min, cfg.t_max],
                      guidance_scale=7.5,
                      conditioning_scale=cfg.cond_scale,
+                     ip_adapter='ip-adapter-plus_sd15.bin',
+                     ip_adapter_scale=cfg.ip_scale, 
+
                      time_schedule='ism', 
                      grad_method=cfg.grad_method, 
                      guess_mode=False)
     def sds_loss(im, step):
-        return sds(im, cond_img, step, cfg.num_opt_steps,
-                grad_scale=0.01 if sds.grad_method != 'hifa' else 1.0
+        return sds(im, cond_img, step,
+                   cfg.num_opt_steps,
+                   ip_adapter_image=input_img,
+                grad_scale=1
                 )
     opt.add_loss('sds',
                  sds_loss, cfg.sds_w, ('input_img', 'step') )
@@ -472,7 +460,7 @@ def frame(step):
 
 
     plt.subplot(gs[0,1])
-    if losses.has_loss('sds'):
+    if opt.has_loss('sds'):
         plt.title('Step %d, t %d, %s' %(step, int(sds.t_saved), lrs))
     else:
         plt.title('Step %d, tau %.2f lr %s'%(step, tau, lrs))
