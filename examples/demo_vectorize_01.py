@@ -66,7 +66,6 @@ def params():
     save = True
     filename = './data/bach.jpg'
 
-    minw, maxw = 0.5, 2  # stroke width range
     degree = 5 # Spline degree
     deriv = 3  # Smoothing degrees
     multiplicity = 1 # Keypoint multiplicity
@@ -74,7 +73,7 @@ def params():
     pspline = 0 # If 1 (true) use discrete penalized spline_points
 
     num_voronoi_points = 50
-    ds = 5
+    ds = 7
     lr_shape = 2.0
     lr_min_scale = 0.7
     lr_color = 1e-2
@@ -85,13 +84,13 @@ def params():
     clip_semantic_w = 0.0
     clip_model = 'CLIPAG'
     clip_layer_weights = [(2, 1.0), (3, 1.0), (6, 1.0)]
-    clipasso = True
+    clipasso = False
     clip_w = 300.0
     semantic_w = 0.0
 
     sds = not clipasso
     sds_w = 1.0
-    t_min, t_max = 0.45, 0.98
+    t_min, t_max = 0.5, 0.98
     cond_scale=0.51
     grad_method = 'sds'
     grad_method = 'ism'
@@ -103,17 +102,6 @@ def params():
     chans = 3
     if chans != 3:
         lab = False
-    palette = torch.linspace(0, 1, K+1, device=device)[:-1]
-    palette = torch.linspace(0, 1, K, device=device)
-    palette = torch.vstack([palette]*chans).T
-
-    palette_file = './data/palettes/ 5
-    pfiles = fs.files_in_dir('/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes', 'ase')
-    palette_file = pfiles[8]
-    palette_file = '/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes/Jamba Juice.ase' #Honey Pot.ase'
-    palette_file = '/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes/rocket021x.ase'
-    palette_file = '/home/danielberio/Dropbox/transfer_box/data/calligraph/palettes/Metropolitan.ase' #Honey Pot.ase'
-    palette = ase_palette.load(palette_file)[0]
 
     palette_im = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/pat5.jpg')
     palette_im = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/hk4.jpg')
@@ -121,18 +109,18 @@ def params():
     palette_im = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/palettes/swirl3.png')
     palette_im = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/camo8.jpg')
     palette_im = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/camo11.jpg')
-
+    num_colors = 7
     gumbel_hard = 0
-    tau_start = 1.0 #3.0
+    tau_start = 1.0 
 
-    style_w = 30.0 # 20.0 #30.0 #10.0 #7.0 #3.0 #7.0 #1.4 #0.7 #0.1 #0.75 #1.0 #2 #1 # 0.5
-    style_path = '' #palette_im # os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/camo8.jpg')
-    stroke_w = 0.0 #1.5 #0.5 #5 #0.5
+    style_w = 30.0 
+    style_path = '' 
+    stroke_w = 0.0 
     stroke_darkness = 0.5
 
-    repulsion_subd = 10 # 15 #0 #15 #15 #10 #5
-    repulsion_w = 5000 #100 # 1000 #7000 #1000 #15000
-    resolve_self_ins_every = 0 #5 #1
+    repulsion_subd = 10 
+    repulsion_w = 5000 
+    resolve_self_ins_every = 0 
     repulsion_d = 10
 
     rand_init = 2
@@ -153,15 +141,13 @@ saver = util.SaveHelper(__file__, output_path, use_wandb=False, #cfg.headless,
                         suffix=cfg.suffix,
                         cfg=cfg)
 
-cfg.palette = to_palette(Image.open(cfg.palette_im), 7) # 2) #7)
-
-
-cfg.palette = torch.tensor(cfg.palette, device=device, dtype=torch.float32)
-cfg.K = len(cfg.palette)
+palette = to_palette(Image.open(cfg.palette_im), cfg.num_colors) 
+palette = torch.tensor(palette, device=device, dtype=torch.float32)
+K = len(palette)
 cfg.gumbel_scale = 0.15 #15 #0.15
 
 if cfg.lab:
-    cfg.palette = rgb2lab(cfg.palette)
+    palette = rgb2lab(palette)
 
 #filename = './data/utah.jpg'
 input_img = Image.open(cfg.filename).resize((400, 400)) #512, 512))
@@ -226,7 +212,7 @@ im = np.array(img)/255
 
 colors = []
 saliencies = []
-palette = cfg.palette.detach().cpu().numpy()
+
 for V in verts:
     rast.clear()
     rast.fill_shape(V)
@@ -235,10 +221,6 @@ for V in verts:
     v = np.mean(img[mask], axis=0)
     saliencies.append(s)
     colors.append(v)
-    #dists = np.linalg.norm(palette - v, axis=1)
-    #initial_logits.append(np.mean(dists) - dists)
-    #initial_logits.append(-(dists - dists.mean()) / (dists.std() + 1e-8))
-#initial_logits.append(np.zeros_like(initial_logits[-1])) # Background
 
 # Sort by increasing salieny
 I = np.argsort(saliencies)
@@ -258,13 +240,6 @@ for P, clr in zip(startup_paths, colors):
                 pspline=cfg.pspline,
                 closed=closed)
     else:
-        # Q = bezier.cubic_bspline_to_bezier_chain(P, periodic=closed)
-        # if closed:
-        #     Q = Q[:-1]
-        # path = diffvg_utils.Path(Q[:,:2],
-        #                          degree=3,
-        #                          stroke_width=(cfg.stroke_w, False),
-        #                          closed=closed)
         path = diffvg_utils.CardinalSpline(P,
                                            stroke_width=(cfg.stroke_w, False),
                                            closed=closed)
@@ -276,49 +251,58 @@ for P, clr in zip(startup_paths, colors):
 num_colors = len(startup_paths)
 num_colors += 1
 #color_logits = torch.tensor(initial_logits, device=device)+ torch.randn((num_colors, cfg.K), device=device)*0.1
-color_logits = torch.randn((num_colors, cfg.K), device=device)*0.5
+color_logits = torch.randn((num_colors, K), device=device)*0.5
 color_logits.requires_grad = True
 # with torch.no_grad():
 #     color_logits.data.clamp_(0.0, 1.0)
 
 #ref_size = np.max([geom.chord_length(P[:,:2]) for P in startup_paths])
 
-Opt = torch.optim.Adam #Adam
-Opt = lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.999)) #, eps=1e-6)
+# Opt = torch.optim.Adam #Adam
+# Opt = lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.999)) #, eps=1e-6)
 
-optimizers = [Opt(scene.get_points(), lr=cfg.lr_shape), #1*lrscale),
-              Opt([color_logits], lr=cfg.lr_color),
-              #Opt(scene.get_fill_colors(),  lr=cfg.lr_color),
-              # Opt(scene.get_stroke_widths(), lr=0.5*lrscale)
-              ]
+params = [(scene.get_points(), cfg.lr_shape), 
+          ([color_logits], cfg.lr_color)]
+opt = diffvg_utils.SceneOptimizer(scene,
+                                  params=params,
+                                  num_steps=cfg.num_opt_steps,
+                                  lr_min_scale=cfg.lr_min_scale)
 
 
-schedulers = [util.step_cosine_lr_scheduler(opt, 0.0, cfg.lr_min_scale, cfg.num_opt_steps) for opt in optimizers]
+
+# optimizers = [Opt(scene.get_points(), lr=cfg.lr_shape), #1*lrscale),
+#               Opt([color_logits], lr=cfg.lr_color),
+#               #Opt(scene.get_fill_colors(),  lr=cfg.lr_color),
+#               # Opt(scene.get_stroke_widths(), lr=0.5*lrscale)
+#               ]
+
+
+# schedulers = [util.step_cosine_lr_scheduler(opt, 0.0, cfg.lr_min_scale, cfg.num_opt_steps) for opt in optimizers]
 
 ##############################################
 # Losses
 
 
 losses = util.MultiLoss(verbose=verbose)
-losses.add('mse',
-           image_losses.MultiscaleMSELoss(rgb=False), cfg.mse_w)
+opt.add_loss('mse',
+                 image_losses.MultiscaleMSELoss(rgb=False), cfg.mse_w,
+                 inputs=('im', 'input_img', 'mse_mul'))
 if cfg.b_spline:
-    losses.add('deriv',
-               spline_losses.make_deriv_loss(cfg.deriv, 10), cfg.smoothing_w)
+    opt.add_loss('deriv',
+                 spline_losses.make_deriv_loss(cfg.deriv, w), cfg.smoothing_w,
+                 inputs=('shapes',))
 
-if True: #cfg.b_spline:
-    losses.add('repulsion',
+    
+opt.add_loss('repulsion',
                spline_losses.make_repulsion_loss(cfg.repulsion_subd, False,
                                                  single=True,
-                                                 signed=True, dist=cfg.repulsion_d), cfg.repulsion_w)
+                                                 signed=True, dist=cfg.repulsion_d), cfg.repulsion_w,
+             ('shapes',))
 
-losses.add('bbox',
-           spline_losses.make_bbox_loss(geom.make_rect(0, 0, w, h)), 1.0)
+opt.add_loss('bbox', spline_losses.make_bbox_loss(geom.rect(0, 0, w, h)), 1.0,
+            inputs=('points',))
 
 
-# style_loss = patch_loss = image_losses.CLIPPatchLoss(rgb=True, image_prompts=[style_img],
-#                                                      model=cfg.clip_model,
-#                                                      n_cuts=16)
 style_loss = image_losses.CLIPPatchLoss(rgb=False, image_prompts=[style_img],
                                         min_size=200, #28,
                                         n_cuts=64,
@@ -326,8 +310,9 @@ style_loss = image_losses.CLIPPatchLoss(rgb=False, image_prompts=[style_img],
                                         blur_sigma=0,
                                         model='CLIPAG', use_negative=False) #clipag=cfg.use_clipag)
 
+opt.add_loss('style', style_loss, cfg.style_w,
+                 inputs=('im',))
 
-losses.add('style', style_loss, cfg.style_w)
 
 if cfg.clipasso:
     clip_loss = image_losses.CLIPVisualLoss(rgb=cfg.use_color,
@@ -336,28 +321,25 @@ if cfg.clipasso:
                                             crop_scale=(0.8, 0.9), #0.6, 0.7), # 0.9,
                                             layer_weights=cfg.clip_layer_weights,
                                             semantic_w=cfg.clip_semantic_w)
-    losses.add('clip',
-               clip_loss, cfg.clip_w)
+    opt.add_loss('clip',
+                 clip_loss, cfg.clip_w, ('im', 'input_img'))
 if cfg.sds:
     sds = sd.SDSLoss("A painting",
-                     augment=4,
-                     rgb=True,
+                     rgb=False,
                      controlnet="lllyasviel/sd-controlnet-canny",
-                     #controlnet="lllyasviel/sd-controlnet-scribble",
                      seed=cfg.seed, #777, #999,
-                    t_range=[cfg.t_min, cfg.t_max],
-                    guidance_scale=7.5,
-                    conditioning_scale=cfg.cond_scale,
-                    num_hifa_denoise_steps=4,
-                    time_schedule='ism', #'dtc', #'dtc', #'pow', #dtc', #linear', #'dtc', #'random', #'dreamtime', #'dtc', #'dreamtime', #'pow',
-                    grad_method=cfg.grad_method, #'hifa', #ism', #csd', #ism', #'ism', #'ism', #'sds',
+                     t_range=[cfg.t_min, cfg.t_max],
+                     guidance_scale=7.5,
+                     conditioning_scale=cfg.cond_scale,
+                     time_schedule='ism', 
+                     grad_method=cfg.grad_method, 
                      guess_mode=False)
     def sds_loss(im, step):
         return sds(im, cond_img, step, cfg.num_opt_steps,
                 grad_scale=0.01 if sds.grad_method != 'hifa' else 1.0
                 )
-    losses.add('sds',
-               sds_loss, cfg.sds_w)
+    opt.add_loss('sds',
+                 sds_loss, cfg.sds_w, ('input_img', 'step') )
 
 ##############################################
 # Begin visualization and optimize
@@ -376,46 +358,30 @@ def frame(step):
 
     perf_t = time.perf_counter()
 
-    for opt in optimizers:
-       opt.zero_grad()
-
-    #tau = tau_start + (tau_end - tau_start) * np.clip(step/(cfg.num_opt_steps*0.25), 0.0, 1.0)
-    #decay_rate = 1e-3
-
+    opt.zero_grad()
+    
     # Setup colors
     tau_start = cfg.tau_start #5.0 #1.0
     tau_end = 0.1
     decay_rate = np.log(tau_end / tau_start) / cfg.num_opt_steps
 
-
     tau = max(tau_end, tau_start * np.exp(decay_rate * step))
 
-    #print('tau', tau)
-    #cfg.gumbel_hard = False
     if cfg.gumbel_hard:
         soft_assign = F.gumbel_softmax(color_logits, tau=tau, hard=True)
     else:
         gumbel_noise = -torch.log(-torch.log(torch.rand_like(color_logits)))
         soft_assign = F.softmax((color_logits + cfg.gumbel_scale*gumbel_noise) / tau, dim=-1)
 
+    colors = soft_assign @ palette
 
-    # cfg.gumbel_hard = False
-    # if cfg.gumbel_hard:
-    #     soft_assign = F.gumbel_softmax(color_logits, tau=tau, hard=True)
-    # else:
-    #     gumbel_noise = -torch.log(-torch.log(torch.rand_like(color_logits)))
-    #     soft_assign = F.softmax((color_logits + cfg.gumbel_scale*gumbel_noise) / tau, dim=-1)
-
-    #soft_assign = F.softmax(color_logits / tau, dim=-1)
-    colors = soft_assign @ cfg.palette
-    #pdb.set_trace()
     if cfg.gumbel_hard:
-        quantized_hard = colors #.detach().cpu().numpy()
+        quantized_hard = colors 
         indices = soft_assign
     else:
         with torch.no_grad():
             indices = torch.argmax(color_logits, dim=-1)
-            quantized_hard = cfg.palette[indices]
+            quantized_hard = palette[indices]
 
     if cfg.lab:
         colors = lab2rgb(colors)
@@ -424,7 +390,6 @@ def frame(step):
     quantized_hard = quantized_hard.detach().cpu().numpy()
     indices = indices.detach().cpu().numpy()
 
-    #print(colors.shape, len(scene.shape_groups))
     for i, (group, color) in enumerate(zip(scene.shape_groups, colors[:-1])):
         #color = color_logits[i,:1]
         group.fill_color = color #torch.tensor([1.0]).to(device)
@@ -433,79 +398,54 @@ def frame(step):
             group.stroke_color = color*cfg.stroke_darkness #torch.tensor([1.0]).to(device)
             scene.groups[i]._stroke_opt = color*cfg.stroke_darkness
 
-    # with torch.no_grad():
-    #     indices = torch.argmax(color_logits, dim=-1)
-    #     quantized_hard = cfg.palette[indices]
-    #     if cfg.lab:
-    #         quantized_hard = lab2rgb(quantized_hard)
-    #     quantized_hard = quantized_hard.detach().cpu().numpy()
-
     background_image = torch.ones((h, w, 3), device=device)*colors[-1]
 
     # Rasterize
     try:
         with util.perf_timer('render', verbose=verbose):
-            im = scene.render(background_image, num_samples=2)[:,:,:3].to(device)
+            im = opt.render(background_image)[:,:,:3].to(device)
     except RuntimeError as e:
         print(e)
         raise RuntimeError('error in render')
-        #pdb.set_trace()
-
-    #print([np.min(geom.chord_lengths(p.points.detach().cpu().numpy(), closed=True)) for p in scene.primitives])
-
-    im_no_gamma = im
-    im = im # ** gamma
-
-    # Losses (see weights above)
-    loss = losses(
-        mse=(im, input_img, cfg.mse_mul),
-        clip=(im, input_img), #target_tensor),
-        clipag=(im,),
-        sds=(im, step),
-        style=(im,),
-        deriv=(scene.shapes,),
-        overlap=(im_no_gamma, scene.shapes,),
-        repulsion=(scene.shapes,),
-        bbox=(scene.shapes,),
-    )
 
     mean_usage = soft_assign.mean(dim=0)
-    print('Mean sum', mean_usage.sum().item())
-    uniform = torch.full_like(mean_usage, 1.0 / cfg.K)
-
-    # Match usage to uniform target
+    uniform = torch.full_like(mean_usage, 1.0 / K)
     palette_usage_loss = 250*F.mse_loss(mean_usage, uniform)
-    print('palette_usage_loss', palette_usage_loss)
-    loss += palette_usage_loss
+    #print('palette_usage_loss', palette_usage_loss)
+    #print('Mean sum', mean_usage.sum().item())
+    loss = palette_usage_loss
 
-    # Add reg for color logits
-#     entropy = -(soft_assign * torch.log(soft_assign + 1e-8)).sum(dim=-1).mean()
-#     lambda_entropy = 0.1 #100
-#     reg = lambda_entropy * entropy  # try lambda_entropy = 0.01 or 0.1
-#     #print('reg', reg.item())
-#     loss += reg
-# #
-    with util.perf_timer('Opt step', verbose=verbose):
-        loss.backward()
-        for opt in optimizers:
-            opt.step()
-        for sched in schedulers:
-            sched.step()
+    opt.step(loss=loss,
+             im=im,
+             input_img=input_img,
+             shapes=scene.shapes,
+             points=scene.get_points(),
+             mse_mul=cfg.mse_mul,
+             step=step)
+    
+    # # Losses (see weights above)
+    # loss = losses(
+    #     mse=(im, input_img, cfg.mse_mul),
+    #     clip=(im, input_img), 
+    #     clipag=(im,),
+    #     sds=(im, step),
+    #     style=(im,),
+    #     deriv=(scene.shapes,),
+    #     repulsion=(scene.shapes,),
+    #     bbox=(scene.shapes,),
+    # )
 
-    # Constrain
-    with torch.no_grad():
-        pass
-        # for path in paths:
-        #     path.param('stroke_width').data.clamp_(minw, maxw)
-        #     #path.param('stroke_width').data[0] = minw
-        #     #path.param('stroke_width').data[-1] = minw
-        # color_logits.data.clamp_(0.0, 1.0)
-        #for i, clr in enumerate(scene.get_fill_colors()):
-        #    clr.data.clamp_(0.0, 1.0)
+
+    # with util.perf_timer('Opt step', verbose=verbose):
+    #     loss.backward()
+    #     for opt in optimizers:
+    #         opt.step()
+    #     for sched in schedulers:
+    #         sched.step()
 
     elapsed = time.perf_counter() - perf_t
     time_count += elapsed
-    lrs = 'lr %.3f'%(optimizers[0].param_groups[0]['lr'])
+    lrs = 'lr %.3f'%(opt.optimizers[0].param_groups[0]['lr'])
 
     # Viz
     im = im.detach().cpu().numpy()
@@ -544,15 +484,8 @@ def frame(step):
     plt.imshow(bg, vmin=0, vmax=1)
 
 
-    resolve = False
-    if cfg.resolve_self_ins_every > 0:
-        resolve = step%cfg.resolve_self_ins_every == cfg.resolve_self_ins_every-1
-
-
     z = 0
 
-    must_resolve = []
-    print('Resolve: ', resolve)
     with torch.no_grad():
         for i, group in enumerate(scene.shape_groups):
             clr = np.ones(3)*quantized_hard[i] #  group.fill_color.detach().cpu().numpy()
@@ -570,62 +503,8 @@ def frame(step):
                 if cfg.stroke_w > 0:
                     plut.stroke(X[:,:2], stroke_clr, lw=cfg.stroke_w*0.5, zorder=z+1)
                 z += 3
-                if resolve:
-                    S1 = clipper.intersection(X, X, clip_type='evenodd')
-                    S2 = clipper.union(X, X, clip_type='evenodd')
-                    if len(S1) > 1 or len(S2) > 1:
-                        must_resolve.append(path)
-                        plut.stroke(S1, 'm', closed=True, zorder=100000)
-                        print("Removing self intersections")
-                    else:
-                        pass #plut.stroke(S, 'g', closed=True, lw=1.5, zorder=z+2) #, zorder=100000)
 
 
-
-    if must_resolve:
-        #optimizers[0].zero_grad(set_to_none=True)
-        with torch.no_grad():
-            for path in must_resolve:
-                points = path.param('points')
-                Q = points.detach().cpu().numpy()
-                S = clipper.simplify_polygon(Q)
-                #S = clipper.intersection(Q, Q, clip_type='evenodd')
-                Q = S[np.argmax([abs(geom.chord_length(P)) for P in S])]
-                plut.stroke(Q, 'c', closed=True, zorder=100000)
-                #print('cl', geom.chord_length(Q), 'mincl', np.min(geom.chord_lengths(Q)))
-                #Q = geom.cleanup_contour(Q, eps=1e-3, closed=True)
-                new_points = torch.from_numpy(Q).to(torch.float32).to(device)
-                #path.params['points'].data = torch.from_numpy(Q).to(torch.float32).to(device)
-                new_points.requires_grad = True
-                path.params['points'] = new_points
-                points.requires_grad = False
-                path.setup()
-                path.refresh()
-
-                # # Replace in point opt
-                opt = optimizers[0]
-                for param_group in opt.param_groups:
-                    for j, param in enumerate(param_group['params']):
-                        if param is points:
-                            param_group['params'][j] = new_points
-                            #pdb.set_trace()
-            # old_opt = optimizers[0]
-            # old_lr = old_opt.param_groups[0]['lr']
-            # optimizers[0] = Opt(scene.get_points(), lr=old_lr)
-            # del old_opt
-            #schedulers[0].optimizer = optimizers[0]
-        #optimizers[0] = Opt(scene.get_points(), lr=cfg.lr_shape)
-        #del old_opt
-        #torch.cuda.empty_cache()
-
-    #must_resolve = []
-
-
-
-    if losses.has_loss('curv'):
-        plut.fill_circle([cfg.target_radius, cfg.target_radius], cfg.target_radius, 'c', zorder=100000)
-
-    #plt.legend()
     plut.setup(box=geom.make_rect(0, 0, w, h))
 
     plt.subplot(gs_sub[0])
@@ -633,18 +512,13 @@ def frame(step):
     plt.subplot(gs_sub[1])
     plt.imshow(style_img)
     plt.subplot(gs_sub[2])
-    for i, clr in enumerate(cfg.palette):
+    for i, clr in enumerate(palette):
         plut.fill_rect(geom.make_rect(i, 0, 1, 1), clr.detach().cpu().numpy())
     plut.setup()
     plt.subplot(gs[2,:])
     plt.title('Loss')
-    for i, (key, kloss) in enumerate(losses.losses.items()):
-        if key=='total' or not losses.has_loss(key):
-            # There is a bug in 'total'
-            continue
-        plt.plot(kloss, label='%s:%.4f'%(key, kloss[-1]))
-    plt.legend()
-
+    opt.plot(50)
+    
     if saver.valid:
         save_every = 10
         if step%save_every == save_every-1:

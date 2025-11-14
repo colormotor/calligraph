@@ -6,8 +6,6 @@ from PIL import Image, ImageFilter
 from easydict import EasyDict as edict
 import torch, time, os
 
-from transformers import get_cosine_schedule_with_warmup
-
 from calligraph import (
     plut,
     geom,
@@ -23,7 +21,6 @@ from calligraph import (
     spline_losses,
     image_losses,
 )
-
 
 device = config.device
 dtype = torch.float32
@@ -250,7 +247,6 @@ def frame(step):
         amt = 0.5
         plt.imshow(target_img*amt + first_frame*(1-amt) , cmap='gray', vmin=0.0, vmax=1.0)
         plut.setup(box=geom.make_rect(0, 0, w, h), axis=True)
-
 
         plt.subplot(gs[0,1])
         plt.title('Step %d'%step)
