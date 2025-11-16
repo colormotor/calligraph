@@ -1,7 +1,7 @@
 # Calligraph
 Code for the paper:
 ### Neural Image Abstraction Using Long Smoothing B-Splines
-**Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir**
+*Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir*
 
 The system allows optimization of B-splines using a geometric smoothing cost on high positional derivatives withing a differentiable vector graphics pipeline. 
 
@@ -21,7 +21,7 @@ If you use this code for academic purposes please cite:
 
 The repository also contains code for the paper:
 ### Image-Driven Robot Drawing with Rapid Lognormal Movements
-**Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie**
+*Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie*
 
 This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting.
 
