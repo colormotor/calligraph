@@ -47,15 +47,6 @@ def bezier(P, t, d=0):
     return (P.T @ B).T
 
 
-def cubic_bezier(P, t):
-    return (
-        (1.0 - t) ** 3 * P[0]
-        + 3 * (1.0 - t) ** 2 * t * P[1]
-        + 3 * (1.0 - t) * t**2 * P[2]
-        + t**3 * P[3]
-    )
-
-
 def bezier_piecewise(Cp, subd=100, degree=3, d=0):
     """sample a piecewise Bezier curve given a sequence of control points"""
     num = num_bezier(Cp.shape[0], degree)

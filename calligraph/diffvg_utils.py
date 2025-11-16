@@ -15,12 +15,12 @@ boolean that specifies if the parameter has gradients
 
 """
 
-from importlib import reload
 import torch
 import pydiffvg
 from collections import defaultdict
 import numpy as np
-from . import config, bspline, bezier, geom, fs
+from . import config, bspline, bezier, geom, fs, util
+import matplotlib.pyplot as plt
 import pdb
 from easydict import EasyDict as edict
 
@@ -124,36 +124,25 @@ def load_areas(path, subd=20, get_scene=False, **kwargs):
         return areas, scene
     return areas
 
-
 class SceneOptimizer:
-    """Optimization wrapper for differentiable rendering scenes.
-    Handles optimization of scene parameters with configurable loss functions,
-    learning rate scheduling, and gradient updates.
-    """
-
-    def __init__(
-        self,
-        scene,
-        params,
-        num_steps,
-        anneal=True,
-        schedule_start=0.0,
-        lr_min_scale=0.2,
-        verbose=False,
-        opt=lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.999)),
-    ):
+    def __init__(self, scene,
+                 params,
+                 num_steps,
+                 anneal=True,
+                 schedule_start=0.0,
+                 lr_min_scale=0.2,
+                 verbose=False,
+                 opt=lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.999))):
         self.scene = scene
         self.optimizers = []
         for p, lr in params:
             self.optimizers.append(opt(p, lr))
 
         if anneal:
-            self.schedulers = [
-                util.step_cosine_lr_scheduler(
-                    opt, schedule_start, lr_min_scale, num_steps
-                )
-                for opt in self.optimizers
-            ]
+            self.schedulers = [util.step_cosine_lr_scheduler(opt,
+                                                             schedule_start,
+                                                             lr_min_scale,
+                                                             num_steps) for opt in self.optimizers]
         else:
             self.schedulers = []
 
@@ -162,7 +151,7 @@ class SceneOptimizer:
         self.losses = util.MultiLoss(verbose)
         self.loss_inputs = {}
         self.verbose = verbose
-
+        
     def add_loss(self, name, loss, weight, inputs=None):
         self.losses.add(name, loss, weight)
         self.loss_inputs[name] = inputs
@@ -172,9 +161,9 @@ class SceneOptimizer:
             opt.zero_grad()
 
     def render(self, background_image, num_samples=2, prefiltering=False):
-        self.im = self.scene.render(
-            background_image, num_samples=num_samples, prefiltering=prefiltering
-        ).to(device)
+        self.im = self.scene.render(background_image,
+                                    num_samples=num_samples,
+                                    prefiltering=prefiltering).to(device)
         return self.im
 
     def loss(self, **kwargs):
@@ -182,7 +171,7 @@ class SceneOptimizer:
 
         for name, input_format in self.loss_inputs.items():
             if input_format is None:
-                inputs = (self.im,)
+                inputs = (self.im, )
             else:
                 inputs = []
                 for inp in input_format:
@@ -191,37 +180,35 @@ class SceneOptimizer:
                     elif inp in kwargs:
                         inputs.append(kwargs[inp])
                     else:
-                        print(kwargs)
-                        breakpoint()
                         raise ValueError(inp, "invalid input to loss", name)
             loss_args[name] = inputs
+        
         self._loss = self.losses(**loss_args)
+        if 'loss' in kwargs:
+            self._loss += kwargs['loss']
         return self._loss
 
+    def has_loss(self, name):
+        return self.losses.has_loss(name)
+    
     def step(self, compute_loss=True, **kwargs):
         if compute_loss:
             self.loss(**kwargs)
-        with util.perf_timer("backwards", verbose=self.verbose):
+        with util.perf_timer('backwards', verbose=self.verbose):
             self._loss.backward()
             for opt in self.optimizers:
                 opt.step()
             for sched in self.schedulers:
                 sched.step()
 
-    def implot(self):
-        from slimgui import implot
-
-        if implot.begin_plot("Loss", size=[-1, 200]):
-            implot.setup_axes(
-                None, None, implot.AxisFlags.AUTO_FIT, implot.AxisFlags.AUTO_FIT
-            )
-            for i, (key, kloss) in enumerate(self.losses.losses.items()):
-                if key == "total" or not self.losses.has_loss(key):
-                    # There is a bug in 'total'
-                    continue
-                # implot.plot_line(f'{key}:{np.round(kloss[-1],2)}##trello', np.array(kloss))
-                implot.plot_line(f"{key}", np.array(kloss[-50:]))
-            implot.end_plot()
+    def plot(self, n=50):
+        plt.title('Loss')
+        for i, (key, kloss) in enumerate(self.losses.losses.items()):
+            if key=='total' or not self.losses.has_loss(key):
+                # There is a bug in 'total'
+                continue
+            plt.plot(kloss[-n:], label='%s:%.4f'%(key, kloss[-1]))
+        plt.legend()
 
 
 class Scene:
@@ -543,7 +530,7 @@ def shape_from_dict(shape_rec, default_cls="Path"):
         print(classtype)
     else:
         if "spline_degree" in shape_rec:
-            classtype = "DynamicBSpline"
+            classtype = "SmoothingBSpline"
         else:
             classtype = default_cls
         # print("Default class")
@@ -558,9 +545,10 @@ def shape_from_dict(shape_rec, default_cls="Path"):
 class Shape:
     """Generic shape"""
 
-    def __init__(self):
+    def __init__(self, classtype=''):
         self.degree = 1
         self.transform = None
+        self.classtype = classtype
         pass
 
     def get_degree(self):
@@ -589,10 +577,6 @@ class Shape:
 
     def param(self, name, numpy=False):
         """Get actual tensor from paramters"""
-        if False:  # name=='points':
-            # print('points', Scene.scale)
-            # print(self.params[name].max())
-            return self.params[name] * Scene.scale
         if numpy:
             return self.params[name].detach().cpu().numpy()
         return self.params[name]
@@ -696,6 +680,7 @@ class OrientedBox(Shape):
 
         self.set_params(_params)
         self.primitives = [self.build_box()]
+        super().init('OrientedBox')
 
     def build_box(self):
         p = self.param("center")
@@ -744,6 +729,8 @@ class Ellipse(Shape):
     """Ellipse, does not handle stroke color, Bezier approx"""
 
     def __init__(self, **kwargs):
+        super().init('Ellipse')
+        
         params = args_to_params(**kwargs)
 
         _params = {
@@ -816,17 +803,12 @@ class Ellipse(Shape):
         )
         self.primitives[0].shape_to_canvas = self.transform
         pass  #
-        # if self.has_grad('center'):
-        #     #print('updating points')
-        #     self.primitives[0].center = self.param('center')
-        # if self.has_grad('radius'):
-        #     self.primitives[0].radius = self.param('radius')
-        # # shape_to_canvas updated globally
 
 
 class Polygon(Shape):
     def __init__(self, points=None, closed=False, postprocess=None, **kwargs):
-        super().__init__()
+        super().__init__('Polygon')
+        
         params = {}
         if points is not None:
             params["points"] = (points, True)
@@ -897,7 +879,7 @@ class Path(Shape):
         scale=None,
         **kwargs,
     ):
-        super().__init__()
+        super().__init__('Path')
 
         if scale is None:
             scale = Scene.scale
@@ -949,11 +931,6 @@ class Path(Shape):
             print("wshape", w.shape)
             nc = self.degree
 
-            # if closed:
-            #    points = torch.vstack([points, points[0]])
-            #    w = torch.cat([w, w[0:1]])
-            # print('wshape', w.shape)
-            # print('pshape', points.shape)
             self.primitives = []
             for i in range(num_segments):
                 ctrl = num_control_points[i : i + 1]
@@ -1107,31 +1084,6 @@ class Path(Shape):
                 self.primitives[0].stroke_width = ww
 
 
-class CubicBSpline(Path):
-    """Constructs a piecewise cubic path using Bspline control points"""
-
-    def __init__(
-        self,
-        points=None,
-        tension=0.5,
-        closed=False,
-        use_distance_approx=False,
-        postprocess=None,
-        **kwargs,
-    ):
-        self.tension = tension
-        super().__init__(
-            points,
-            degree=3,
-            closed=closed,
-            use_distance_approx=use_distance_approx,
-            postprocess=postprocess,
-            **kwargs,
-        )
-
-    def get_points(self):
-        pts = cubic_bspline(self.param("points"), self.closed)
-        return pts
 
 
 def cardinal_spline(Q, c, closed=False):
@@ -1180,6 +1132,7 @@ class CardinalSpline(Path):
         super().__init__(
             points, degree=3, closed=closed, split_pieces=False, **clean_args
         )
+        self.classtype = 'CardinalSpline'
 
     def get_degree(self):
         return self.degree
@@ -1253,7 +1206,8 @@ class SmoothingBSpline(Path):
         super().__init__(
             points, degree=3, closed=closed, split_pieces=split_pieces, **kwargs
         )
-
+        self.classtype = 'SmoothingBSpline'
+        
     def get_degree(self):
         return self.spline_degree
 
@@ -1414,7 +1368,7 @@ class SmoothingBSpline(Path):
         else:
             l = 1.0
         t = self.knots
-        Qhat = self.Q.reshape(-1, 1) / l  # (l**2) #(((t[-k]-t[k-1])**5)/l**2)
+        Qhat = self.Q.reshape(-1, 1) / l  
 
         res = Qhat.T @ G @ Qhat
         return res
@@ -1479,35 +1433,6 @@ def get_color_param(color, opacity=1.0):
     elif len(color) == 3:
         return torch.concat([color, torch.tensor([1.0 * opacity]).to(device)])
     return color
-
-
-def postprocess_smooth(alpha):
-    def smooth(self, requires_grad):
-        path = self.params["points"]
-        with torch.no_grad():
-            path[:, 0] = (1 - alpha) * path[:, 0] + alpha * (
-                (torch.roll(path[:, 0], 1) + torch.roll(path[:, 0], -1)) / 2.0
-            )
-            path[:, 1] = (1 - alpha) * path[:, 1] + alpha * (
-                (torch.roll(path[:, 1], 1) + torch.roll(path[:, 1], -1)) / 2.0
-            )
-
-    return smooth
-
-
-def postprocess_schematize_points(C, start_ang):
-    """schematization postprocess on points (Polygon or Path)"""
-
-    def schematize(self):
-        self.params["points"].data = quantize_iterative_round(
-            self.params["points"],
-            C,
-            start_ang,
-            requires_grad=self.params["points"].requires_grad,
-            closed=self.closed,
-        )
-
-    return schematize
 
 
 def cubic_bspline(P, periodic=False):

@@ -16,16 +16,14 @@ from calligraph import (plut,
                         sd,
                         config,
                         util,
-                        walks,
-                        files,
+                        fs,
                         diffvg_utils,
                         tsp_art,
                         segmentation,
                         imaging,
                         stroke_init,
                         spline_losses,
-                        image_losses,
-                        contour_histogram)
+                        image_losses,)
 import pdb
 
 import torch
@@ -238,7 +236,7 @@ scene = diffvg_utils.Scene()
 
 for Pw in startup_paths:
     if cfg.b_spline:
-        path = diffvg_utils.DynamicBSpline(Pw[:,:2],
+        path = diffvg_utils.SmoothingBSpline(Pw[:,:2],
                                         stroke_width=(Pw[:,2], True),
                                         degree=cfg.degree,
                                         pspline=cfg.pspline,

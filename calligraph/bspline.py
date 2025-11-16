@@ -3,7 +3,6 @@ import numpy as np
 import scipy
 from scipy.interpolate import BSpline
 from scipy.linalg import block_diag
-import importlib
 from scipy.special import binom
 from scipy.integrate import quad, fixed_quad
 import numbers
