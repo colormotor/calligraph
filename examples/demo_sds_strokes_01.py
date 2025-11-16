@@ -91,7 +91,7 @@ def params():
     ref_size_factor = 1.0
 
     single_path = 1
-    point_density = 0.003 #5
+    point_density = 0.001 #3 #5
     
     ood = 1
     smoothing_w = 9000.0 #100.0 #0.0 #1000.0 #5000 #3000 #OK #15000 # 500 #50 #10.0 #10.0 20 #1000.0 #1 #1 #1 #500.0 #1 #1000 #3000.0
@@ -138,15 +138,14 @@ def params():
     t_min, t_max = 0.7, 0.98 # THICK
     t_min, t_max = 0.6, 0.98 # THICK
 
-    grad_method = 'ism'
+    grad_method = 'ism' #sds #ism
     if clipasso:
         t_min, t_max = 0.02, 0.5
     prompt = "A single line pen drawing, single stroke, thin line"
     prompt = "An architectural drawing"
     prompt = "A pencil sketch, thin strokes"
     prompt = "A black and white ink drawing"
-    prompt = "Convert to a black and white ink drawing, bold calligraphic strokes"
-
+    
     overlap_w = 0 #100.0
     blur = 1
 
@@ -157,9 +156,6 @@ def params():
     repulsion_subd = 15
     repulsion_w = 0
 
-    C = 2
-    start_ang = 0
-    orient_w = 0 #100
     startup_w = 1
     mse_w = 0.0
     mse_mul = 1 # Factor multiplying each mse blur level (> 1 emph low freq)
@@ -247,9 +243,6 @@ for Pw in startup_paths:
                                         degree=cfg.degree,
                                         pspline=cfg.pspline,
                                         multiplicity=cfg.multiplicity,
-                                        split_pieces=cfg.alpha < 1 and cfg.overlap_w > 0,
-                                        #init_smooth_params=dict(r=1.0,
-                                        #                    der=3) if cfg.multiplicity > 1 else {},
                                         closed=cfg.closed)
     else:
         if cfg.cardinal:
@@ -306,8 +299,8 @@ if cfg.clipasso:
                clip_loss, cfg.clip_w, ('im', 'input_img'))
 
 if cfg.sds:
-    if cfg.style_w > 0:
-        sd.cfg.enable_sequential_cpu_offload = True
+    # if cfg.style_w > 0:
+    #     sd.cfg.enable_sequential_cpu_offload = True
     sds = sd.SDSLoss(cfg.prompt,
                      augment=0,
                      rgb=False,
@@ -319,13 +312,13 @@ if cfg.sds:
                      conditioning_scale=cfg.cond_scale, #9,
                     num_hifa_denoise_steps=4,
                     ip_adapter='ip-adapter-plus_sd15.bin' if cfg.ip_adapter else '',
-                     ip_adapter_scale=cfg.ip_scale, #1.3, #0.9,
+                     ip_adapter_scale=cfg.ip_scale, 
                      time_schedule='ism', 
                     grad_method=cfg.grad_method, 
                      guess_mode=cfg.guess_mode)
     def sds_loss(im, step):
         return sds(im,
-                   cond_img, # if not cfg.ip_adapter else None,
+                   cond_img, 
                    step, cfg.num_opt_steps,
                    grad_scale=0.01 if sds.grad_method == 'ism' else 0.1,
                    ip_adapter_image=input_img
@@ -413,7 +406,7 @@ def frame(step):
         plt.subplot(gs[0,0])
         plt.title('Startup - time: %.3f'%(time_count))
         amt = 0.5
-        plt.imshow(first_frame*amt + target_img*(1-amt) , cmap='gray')
+        plt.imshow(im*amt + target_img*(1-amt) , cmap='gray')
         # for i, path in enumerate(paths):
         #     Q = path.param('points').detach().cpu().numpy()
         #     P = Q[::multiplicity]
@@ -423,10 +416,10 @@ def frame(step):
 
         plt.subplot(gs[0,1])
         lrs = 'lr %.3f'%(opt.optimizers[0].param_groups[0]['lr'])
-        # if losses.has_loss('sds'):
-        #     plt.title('Step %d, t %d, %s' %(step, int(sds.t_saved), lrs))
-        # else:
-        #     plt.title('Iter: %d Step %d, %s'%(iteration, step, lrs))
+        if opt.has_loss('sds'):
+            plt.title('Step %d, t %d, %s' %(step, int(sds.t_saved), lrs))
+        else:
+            plt.title('Iter: %d Step %d, %s'%(iteration, step, lrs))
         plt.imshow(background_image, cmap='gray', vmin=0, vmax=1)
         plt.imshow(im, cmap='gray', vmin=0, vmax=1)
 
@@ -435,8 +428,6 @@ def frame(step):
             plt.imshow(clip_loss.y_augs[1])
         if cfg.sds:
             plt.imshow(np.array(cond_img))
-        # plt.subplot(gs_sub[0,1])
-        # plt.imshow(density_map)
         plt.subplot(gs_sub[0,2])
         plt.imshow(np.array(style_img), cmap='gray')
         # with util.perf_timer('Thick curves', verbose=verbose):
