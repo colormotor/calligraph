@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-''' Stable diffusion and score distillation sampling utils'''
+"""
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+Stable diffusion and score distillation sampling utils
+"""
 
 from diffusers import (DiffusionPipeline,
                        StableDiffusionControlNetPipeline,

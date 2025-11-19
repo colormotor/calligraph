@@ -1,14 +1,14 @@
-'''
-  _   _   _   _   _   _   _   _   _   _   _
- / \ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \
-( P | O | L | Y | G | O | N | S | O | U | P )
- \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/
+#!/usr/bin/env python3
+"""
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
 
-Plotter-friendly graphics utilities
-© Daniel Berio (@colormotor) 2021 - ...
-
-geom - Geometry utilities
-'''
+Geometry utils
+"""
 
 import copy
 import numpy as np
