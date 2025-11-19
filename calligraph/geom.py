@@ -1,4 +1,12 @@
 '''
+  _   _   _   _   _   _   _   _   _   _   _
+ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \
+( P | O | L | Y | G | O | N | S | O | U | P )
+ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/
+
+Plotter-friendly graphics utilities
+© Daniel Berio (@colormotor) 2021 - ...
+
 geom - Geometry utilities
 '''
 
@@ -11,7 +19,6 @@ import numbers
 
 def is_number(x):
     return isinstance(x, numbers.Number)
-
 
 def is_compound(S):
     '''Returns True if S is a compound polyline,
@@ -27,7 +34,6 @@ def is_compound(S):
     if type(S[0])==np.ndarray and len(S[0].shape) > 1:
         return True
     return False
-
 
 def is_polyline(P):
     '''A polyline can be represented as either a list of points or a NxDim array'''
@@ -67,10 +73,8 @@ def vec(*args):
 def colvec(*args):
     return np.array(args).reshape(-1,1)
 
-
 def direction(theta):
     return np.array([np.cos(theta), np.sin(theta)])
-
 
 def radians( x ):
     return np.pi/180*x
@@ -107,17 +111,22 @@ def distance_sq(a, b):
     return np.dot(b-a, b-a)
 
 
+def normc(X):
+    ''' Normalizes columns of X'''
+    l = np.sqrt( X[:,0]**2 + X[:,1]**2 )
+    Y = np.array(X)
+    return Y / np.maximum(l, 1e-9).reshape(-1,1)
+
+
 def tangents(P, closed=False):
     if closed:
         P = np.vstack([P, P[0]])
     return np.diff(P, axis=0)
 
-
 def edges(P, closed=False):
     if closed:
         P = close(P)
     return zip(P, P[1:])
-
 
 def turning_angles(P, closed=False, all_points=False, N=None):
     if len(P) <= 2:
@@ -141,7 +150,7 @@ def turning_angles(P, closed=False, all_points=False, N=None):
 
 def normals_2d(P, closed=0, vertex=False):
     ''' 2d normals (fixme)'''
-
+    # pdb.set_trace()
     if closed:
         # P = np.vstack([P[-1], P, P[0]])
         P = np.vstack([P, P[0]])
@@ -286,38 +295,33 @@ def bounding_box(S, padding=0):
     bmax = np.max([np.max(V, axis=0) for V in S if len(V)], axis=0)
     return [bmin - padding, bmax + padding]
 
+bbox = bounding_box
 
 def rect_w(rect):
     return (np.array(rect[1]) - np.array(rect[0]))[0]
 
-
 def rect_h(rect):
     return (np.array(rect[1]) - np.array(rect[0]))[1]
-
 
 def rect_size(rect):
     return np.array(rect[1]) - np.array(rect[0])
 
-
 def rect_aspect(rect):
     return rect_w(rect) / rect_h(rect)
-
 
 def pad_rect(rect, pad):
     return np.array(rect[0])+pad, np.array(rect[1])-pad
 
-
 def make_rect(x, y, w, h):
     return [np.array([x, y]), np.array([x+w, y+h])]
 
+rect = make_rect
 
 def make_centered_rect(p, size):
     return make_rect(p[0] - size[0]*0.5, p[1] - size[1]*0.5, size[0], size[1])
 
-
 def rect_center(rect):
     return rect[0] + (rect[1]-rect[0])/2
-
 
 def rect_corners(rect, close=False):
     w, h = rect_size(rect)
@@ -328,28 +332,22 @@ def rect_corners(rect, close=False):
         P.append(P[0])
     return P
 
-
 def rect_l(rect):
     return rect[0][0]
-
 
 def rect_r(rect):
     return rect[1][0]
 
-
 def rect_t(rect):
     return rect[0][1]
 
-
 def rect_b(rect):
     return rect[1][1]
-
-
+    
 def random_point_in_rect(box):
     x = np.random.uniform( box[0][0], box[1][0] )
     y = np.random.uniform( box[0][1], box[1][1] )
     return np.array([x, y])
-
 
 def scale_rect(rect, s, halign=0, valign=0):
     if is_number(s):
@@ -398,6 +396,30 @@ def rect_in_rect(src, dst, padding=0., axis=None):
 
     return make_rect(x, y, w, h)
 
+def rect_to_rect_transform(src, dst):
+    ''' Fit src rect into dst rect, without preserving aspect ratio'''
+    m = np.eye(3,3)
+
+    sw, sh = rect_size(src)
+    dw, dh = rect_size(dst)
+
+    m = trans_2d([dst[0][0],dst[0][1]])
+    m = np.dot(m, scaling_2d([dw/sw,dh/sh]))
+    m = np.dot(m, trans_2d([-src[0][0],-src[0][1]]))
+
+    return m
+
+def rect_to_rect_transform(src, dst):
+    m = np.eye(3,3)
+
+    sw, sh = rect_size(src)
+    dw, dh = rect_size(dst)
+
+    m = trans_2d([dst[0][0],dst[0][1]])
+    m = np.dot(m, scaling_2d([dw/sw,dh/sh]))
+    m = np.dot(m, trans_2d([-src[0][0],-src[0][1]]))
+
+    return m
 
 def rect_in_rect_transform(src, dst, padding=0., axis=None):
     ''' Return homogeneous transformation matrix that fits src rect into dst'''
@@ -414,12 +436,10 @@ def rect_in_rect_transform(src, dst, padding=0., axis=None):
     M = np.dot(M, trans_2d(-cenp_src))
     return M
 
-
 def transform_to_rect(shape, rect, padding=0., offset=[0,0], axis=None):
     ''' transform a shape or polyline to dest rect'''
     src_rect = bounding_box(shape)
     return affine_transform(trans_2d(offset)@rect_in_rect_transform(src_rect, rect, padding, axis), shape)
-
 
 # 2d transformations (affine)
 def det22(mat):
@@ -433,7 +453,6 @@ def rotate_vector_2d(v, ang):
     return np.array([x*ca - y*sa,
                      x*sa + y*ca])
 
-
 def rot_2d( theta, affine=True ):
     d = 3 if affine else 2
     m = np.eye(d)
@@ -444,13 +463,11 @@ def rot_2d( theta, affine=True ):
 
     return m
 
-
 def trans_2d( xy):
     m = np.eye(3)
     m[0,2] = xy[0]
     m[1,2] = xy[1]
     return m
-
 
 def scaling_2d( xy, affine=True ):
     d = 3 if affine else 2
@@ -463,7 +480,6 @@ def scaling_2d( xy, affine=True ):
     m[1,1] = xy[1]
     return m
 
-
 def shear_2d(xy, affine=True):
     d = 3 if affine else 2
     m = np.eye(d)
@@ -471,6 +487,12 @@ def shear_2d(xy, affine=True):
     m[0,1] = xy[0]
     m[1,0] = xy[1]
     return m
+
+
+t2d = trans_2d
+r2d = rot_2d
+s2d = scaling_2d
+sh2d = shear_2d
 
 
 # 3d transformations (affine)
@@ -484,7 +506,6 @@ def rotx_3d (theta, affine=True):
 
     return m
 
-
 def roty_3d (theta, affine=True):
     d = 4 if affine else 3
     m = np.eye(d)
@@ -494,7 +515,6 @@ def roty_3d (theta, affine=True):
     m[2,0] = -st; m[2,2] = ct
 
     return m
-
 
 def rotz_3d (theta, affine=True):
     d = 4 if affine else 3
@@ -506,14 +526,12 @@ def rotz_3d (theta, affine=True):
 
     return m
 
-
 def trans_3d(xyz):
     m = np.eye(4)
     m[0,3] = xyz[0]
     m[1,3] = xyz[1]
     m[2,3] = xyz[2]
     return m
-
 
 def scaling_3d(s, affine=True):
     d = 4 if affine else 3
@@ -526,13 +544,11 @@ def scaling_3d(s, affine=True):
     m[2,2] = s[2]
     return m
 
-
 def _affine_transform_polyline(mat, P):
     dim = P[0].size
     P = np.vstack([np.array(P).T, np.ones(len(P))])
     P = mat@P
     return list(P[:dim,:].T)
-
 
 def affine_transform(mat, data):
     if is_empty(data):
@@ -551,11 +567,9 @@ def affine_transform(mat, data):
         p = np.concatenate([data, [1]])
         return (mat@p)[:dim]
 
-
 def affine_mul(mat, data):
     print('Use affine_transform instead')
     return affine_transform(mat, data) # For backwards compat
-
 
 tsm = affine_transform
 
@@ -584,42 +598,6 @@ def projection(mat, data):
 class shapes:
     def __init__(self):
         pass
-
-    @staticmethod
-    def box_3d(min, max):
-        S = []
-        # plotter-friendy version
-        S.append(shapes.polygon(vec(min[0], min[1], min[2]),
-                                vec(max[0], min[1], min[2]),
-                                vec(max[0], max[1], min[2]),
-                                vec(min[0], max[1], min[2])))
-        S.append(shapes.polygon(vec(min[0], min[1], max[2]),
-                                vec(max[0], min[1], max[2]),
-                                vec(max[0], max[1], max[2]),
-                                vec(min[0], max[1], max[2])))
-        for i in range(4):
-            S.append(np.array([S[0][i], S[1][i]]))
-        # line segments only
-        # S.append([vec(min[0], min[1], min[2]),  vec(max[0], min[1], min[2])])
-        # S.append([vec(max[0], min[1], min[2]),  vec(max[0], max[1], min[2])])
-        # S.append([vec(max[0], max[1], min[2]),  vec(min[0], max[1], min[2])])
-        # S.append([vec(min[0], max[1], min[2]),  vec(min[0], min[1], min[2])])
-        # S.append([vec(min[0], min[1], max[2]),  vec(max[0], min[1], max[2])])
-        # S.append([vec(max[0], min[1], max[2]),  vec(max[0], max[1], max[2])])
-        # S.append([vec(max[0], max[1], max[2]),  vec(min[0], max[1], max[2])])
-        # S.append([vec(min[0], max[1], max[2]),  vec(min[0], min[1], max[2])])
-        # S.append([vec(min[0], min[1], min[2]),  vec(min[0], min[1], max[2])])
-        # S.append([vec(min[0], max[1], min[2]),  vec(min[0], max[1], max[2])])
-        # S.append([vec(max[0], max[1], min[2]),  vec(max[0], max[1], max[2])])
-        # S.append([vec(max[0], min[1], min[2]),  vec(max[0], min[1], max[2])])
-        return S
-
-    @staticmethod
-    def cuboid(center=vec(0,0,0), halfsize=vec(1,1,1)):
-        if is_number(halfsize):
-            size = [halfsize, halfsize, halfsize]
-        return shapes.box_3d(np.array(center) - np.array(halfsize),
-                         np.array(center) + np.array(halfsize))
 
 
     @staticmethod
@@ -691,7 +669,6 @@ def randspace(a, b, n, minstep=0.1, maxstep=0.6):
     v = np.cumsum(v)
     return a + v*(b-a)
 
-
 def curvature(P, closed=0):
     ''' Contour curvature'''
     P = P.T
@@ -714,7 +691,6 @@ def curvature(P, closed=0):
 
     return K
 
-
 def cleanup_contour(X, eps=1e-10, closed=False, get_inds=False):
     ''' Removes points that are closer then a threshold eps'''
     if closed:
@@ -735,15 +711,13 @@ def cleanup_contour(X, eps=1e-10, closed=False, get_inds=False):
         return X, inds
     return X
 
-
 def dp_simplify(P, eps, closed=False):
     import cv2
     P = np.array(P)
     dtype = P.dtype
     return cv2.approxPolyDP(P.astype(np.float32), eps, closed).astype(dtype)[:,0,:]
 
-
-def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density=None, density_weight=0.5 ):
+def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density=None, density_weight=0.5, eps=1e-10 ):
     ''' Uniformly samples a contour at a step dist'''
     if closed:
         X = np.vstack([X, X[0]])
@@ -754,9 +728,11 @@ def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density
     # chord lengths
     s = np.sqrt(D[:,0]**2 + D[:,1]**2)
     # Delete values in input with zero distance (due to a bug in interp1d)
-    I = np.where(s==0)
-    X = np.delete(X, I, axis=0)
-    s = np.delete(s, I)
+    I = np.where(s < eps) #s==0)
+    if len(I[0]):
+        X = np.delete(X, I, axis=0)
+        s = np.delete(s, I)
+
     # if inv_density is not None:
     #     inv_density = np.delete(inv_density, I)
     if len(X) < 2:
@@ -768,10 +744,32 @@ def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density
         else:
             data = np.delete(data, I, axis=0)
 
+    #maxs = np.max(s)
+    #s = s/maxs
+    #delta_s = delta_s/maxs #np.max(s)
+
+    # if inv_density is not None:
+    #     inv_density = inv_density[:-1]
+    #     inv_density = inv_density - np.min(inv_density)
+    #     inv_density /= np.max(inv_density)
+    #     density = density #1.0 - inv_density
+    #     s = (1.0 - density_weight)*s + density_weight*density
     u = np.cumsum(np.concatenate([[0.], s]))
     u = u / u[-1]
     n = int(np.ceil(np.sum(s) / delta_s))
+    print('uniformsample', u[0], u[-1], n)
     t = np.linspace(u[0], u[-1], n)
+
+    # if inv_density is not None:
+    #     inv_density = inv_density - np.min(inv_density)
+    #     inv_density /= np.max(inv_density)
+    #     inv_density = np.clip(inv_density, 0.75, 1.0)
+    #     param = np.cumsum(1-inv_density)
+    #     param = param - np.min(param)
+    #     param = param / np.max(param)
+
+    #     u = u*param #(1.0 - density_weight) + param*density_weight
+    #     u = u/u[-1]
 
     f = interp1d(u, X.T, kind=kind)
     Y = f(t)
@@ -790,7 +788,6 @@ def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density
         return Y[:,:-1].T
     return Y.T
 
-
 def subdivide(P, closed=False, n=1):
     if closed:
         P = close(P)
@@ -804,7 +801,6 @@ def subdivide(P, closed=False, n=1):
         return subdivide(Q, closed, n-1)
     return np.array(Q)
 
-
 def thick_curve(Xw, scalefn=lambda x: x, smooth_k=0, union=True, add_cap=True, unit=1, **kwargs):
     from . import clipper
     Xw = np.array(Xw)
@@ -813,7 +809,7 @@ def thick_curve(Xw, scalefn=lambda x: x, smooth_k=0, union=True, add_cap=True, u
         Ol = curved_offset(Xw[:,:2], Xw[:,2], smooth_k, **kwargs)[::-1]
         Or = curved_offset(Xw[:,:2], -Xw[:,2], smooth_k, **kwargs)
     except TypeError:
-
+        #pdb.set_trace()
         return []
 
     stroke = np.vstack([Ol, Or])
@@ -824,7 +820,6 @@ def thick_curve(Xw, scalefn=lambda x: x, smooth_k=0, union=True, add_cap=True, u
            stroke = clipper.union(stroke, shapes.circle(Xw[-1,:2], Xw[-1,2], subd=None, unit=unit))
 
     return stroke
-
 
 def curved_offset(spine, widths, n=0, degree=3, closed=False, smooth_k=0):
     # smoothing spline
@@ -943,13 +938,13 @@ def cum_chord_lengths( P, closed=0 ):
     L = chord_lengths(P, closed)
     return np.cumsum(np.concatenate([[0.0],L]))
 
-
 def chord_length( P, closed=0 ):
     ''' Chord length of a contour '''
     if len(P.shape)!=2 or P.shape[0] < 2:
         return 0.
     L = chord_lengths(P, closed)
     return np.sum(L)
+
 
 def polygon_area(P):
     if len(P.shape) < 2 or P.shape[0] < 3:
@@ -967,30 +962,35 @@ def polygon_area(P):
 
     return area
 
+def polygon_area_tri(P):
+    if len(P.shape) < 2 or P.shape[0] < 3:
+        return 0
+    n = P.shape[0]
+    area = 0.0
+    for i in range(n):
+        j = (i+1)%n
+        area += 0.5*(P[i,0] * P[j,1] - P[j,0] * P[i,1]) # Seems to be less precise for small numbers?
+    return area
+
 def triangle_area( a, b, c ):
     da = a-b
     db = c-b
     return det(np.vstack([da, db]))*0.5
 
-
 def collinear(a, b, p, eps=1e-5):
     return abs(triangle_area(a, b, p)) < eps
 
-
 def segments_collinear(a, b, c, d, eps=1e-5):
     return collinear(a, b, c, eps) and collinear(a, b, d, eps)
-
 
 def left_of(p, a, b, eps=1e-10):
     # Assumes coordinate system with y up so actually will be "right of" if visualizd y down
     p, a, b = [np.array(v) for v in [p, a, b]]
     return triangle_area(a, b, p) < eps
 
-
 def is_point_in_triangle(p, tri, eps=1e-10):
     L = [left_of(p, tri[i], tri[(i+1)%3], eps) for i in range(3)]
     return L[0]==L[1] and L[1]==L[2]
-
 
 def is_point_in_rect(p, rect):
     ''' return wether a point is in a rect'''
@@ -1000,7 +1000,6 @@ def is_point_in_rect(p, rect):
 
     return ( p[0] >= l and p[1] >= t and
              p[0] <= r and p[1] <= b )
-
 
 def is_point_in_poly(p, P):
     ''' Return true if point in polygon'''
@@ -1013,8 +1012,7 @@ def is_point_in_poly(p, P):
                  c = not c
         j = i
     return c
-
-
+   
 def is_point_in_shape(p, S, get_flags=False):
     ''' Even odd point in shape'''
     if p is None:
@@ -1075,7 +1073,7 @@ def get_point_in_polygon(P, area=None):
     if v is None:
         # from polygonsoup import plut
         # import pdb
-
+        # pdb.set_trace()
         #print('Could not find convex vertex for area %f'%area)
         return None # np.mean(P, axis=0)
 
@@ -1128,7 +1126,6 @@ def get_points_in_holes(S):
     '''Get positions inside the holes of S (if any)'''
     holes, points, areas = get_holes(S, get_points_and_areas=True)
     return [points[i] for i, hole in enumerate(holes) if hole]
-
 
 def fix_shape_winding(S):
     ''' Fixes shape winding to be consistent:

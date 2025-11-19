@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from . import diffvg_utils, geom, plut, config, files
+from . import diffvg_utils, geom, plut, config, fs
 import torch.nn.functional as F
 from numpy.linalg import norm
 import pdb
@@ -199,7 +199,7 @@ diffvg_utils.shape_classes["SLMTrajectory"] = SLMTrajectory
 
 
 def trajectories_and_speeds_from_scene(path, delta_t_mul=1.0, subd=15, dt=0.1):
-    strokes = files.load_json(path)
+    strokes = fs.load_json(path)
 
     trajectories = []
     speeds = []
