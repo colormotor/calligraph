@@ -44,7 +44,7 @@ def show_animation(fig, frame, num_frames, ax=None, filename='', fps=30, headles
 
         plt.clf()
         try:
-            frame(i)
+            cur_frame = frame(i)
         except Exception as e:
             if ani is not None:
                 ani.event_source.stop()
@@ -53,12 +53,18 @@ def show_animation(fig, frame, num_frames, ax=None, filename='', fps=30, headles
 
         fig = plt.gcf()
         if filename:
-            buf = BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            image = Image.open(buf)
+            if cur_frame is None:
+                buf = BytesIO()
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                image = Image.open(buf)
+            else:
+                if type(cur_frame) == np.ndarray:
+                    if cur_frame.dtype != np.uint8:
+                        cur_frame = (cur_frame*255).astype(np.uint8)
+                    cur_frame = Image.fromarray(cur_frame)
+                image = cur_frame.convert('RGB')
             frames.append(np.array(image)[:,:,:3])
-
         if i == num_frames - 1:
             print("Animation ended")
             if ani is not None:
@@ -110,6 +116,8 @@ def show_animation(fig, frame, num_frames, ax=None, filename='', fps=30, headles
             video_writer.write(frame[:,:,::-1])
         video_writer.release()
         print("Finished saving")
+
+        
 
 def figure_pixels(w, h):
     plt.figure(figsize=(w/100, h/100), dpi=100)

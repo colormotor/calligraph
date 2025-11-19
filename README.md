@@ -38,8 +38,8 @@ If you use this specific part of the code for academic purposes, please cite:
 ```
 
 ## Licence
-- The code/software in this repository is licenced under the *GNU GPLv3* (see [LICENCE](./LICENCE)). 
-- Artistic/creative outputs generated with this software are licenced under *Creative Commons Attribution 4.0 International License (CC BY 4.0)*. When sharing or distributing generated works you must give appropriate credit to: *Daniel Berio, enist.org, 2025*.
+- The code/software in this repository is licensed under the *GNU GPLv3* (see [LICENCE](./LICENCE)). 
+- Artistic/creative outputs generated with this software are licensed under *Creative Commons Attribution 4.0 International License (CC BY 4.0)*. When sharing or distributing generated works you must give appropriate credit to: *Daniel Berio, enist.org, 2025*.
 
 ## Conda (recommended)
 

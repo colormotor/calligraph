@@ -35,8 +35,9 @@ def params():
     # These are automatically converted to named script arguments
     # Currently requires booleans to be 0 or 1 to work from cmd-line
     save = True
-    output_path = './generated/tests'
-
+    output_path = './generated/'
+    output_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/outputs/'
+    
     filename = './data/spock.jpg'
     #filename = './data/dog4.jpg'
     style_path = './data/style_imgs/music.jpg'
@@ -44,7 +45,7 @@ def params():
     
     mask = None #'./data/utah-mask.jpg' #utah-fix.jpg' #.jpg'
 
-    minw, maxw = 0.5, 4.0 
+    minw, maxw = 0.5, 7.0 
     degree = 5
     deriv = 3
     multiplicity = 3
@@ -68,16 +69,16 @@ def params():
     width_anneal_end = 0.75
 
     ood = 1
-    smoothing_w = 9000.0 
+    smoothing_w = 200.0 
 
     clipasso = False
     clip_w = 100.0 
     lpips_w = 0.0 
-    style_w = 60.0 
+    style_w = 150.0 
     distortion_scale = 0.3 
     patch_size = 128 
 
-    clip_layer_weights = [(2, 1.0), (3, 1.0), (6, 1.0)] #, (6, 1.0)] #, (1, 0.4)]
+    clip_layer_weights = [(2, 1.0), (3, 1.0), (4, 1.0)] #, (6, 1.0)] #, (1, 0.4)]
     clip_model='CLIPAG'
     clip_semantic_w = 0.0
 
@@ -113,6 +114,8 @@ def params():
     num_iterations = 1
 
     suffix=''
+
+    image_movie = True
 
     return locals()
 
@@ -221,7 +224,7 @@ if cfg.vary_width:
 opt = diffvg_utils.SceneOptimizer(scene,
                                   params=params,
                                   num_steps=cfg.num_opt_steps,
-                                  lr_min_scale=0.4)
+                                  lr_min_scale=0.2)
 
 
 
@@ -419,7 +422,9 @@ def frame(step):
         saveim = Image.fromarray((im*255).astype(np.uint8))
         saveim.save(saver.with_ext('.png', suffix='output'))
         saver.copy_file()
-        
+
+    if cfg.image_movie:
+        return im
 
 filename = saver.with_ext('.mp4')
 plut.show_animation(fig, frame, cfg.num_opt_steps, filename=filename, headless=cfg.headless)
