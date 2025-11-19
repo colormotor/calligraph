@@ -191,6 +191,7 @@ def voronoi_centroids(points, density, density_P=None, density_Q=None):
         region_vertices.append(vertices)
     return regions, np.array(centroids), region_vertices
 
+
 def initialization(n, data, subd=10):
     points = []
     #print('datashape', data.shape)
@@ -206,6 +207,7 @@ def initialization(n, data, subd=10):
                 points.append([x, y])
             idx += 1
     return np.array(points)
+
 
 def weighted_voronoi_sampling(density_map, n_points, points_per_cell=100, nb_iter=10, thresh=1.0, get_regions=False):
     scaling = (n_points * points_per_cell) / (density_map.shape[0]*density_map.shape[1])
@@ -241,12 +243,22 @@ def make_coverage_penalty(im, lw=1):
         return np.sum(img*im)
     return cost
 
-def heuristic_solve(points, time_limit_minutes=1/30, penalty_func=None, penalty_weight=0.1, logging=False, verbose=False, cycle=True, end_to_end=False, **kwargs):
+
+def heuristic_solve(points,
+                    time_limit_minutes=1/30,
+                    penalty_func=None,
+                    penalty_weight=0.1,
+                    logging=False,
+                    verbose=False,
+                    cycle=True,
+                    end_to_end=False,
+                    **kwargs):
+    ''' Solve the TSP problem using ortools'''
     # See https://developers.google.com/optimization/routing/tsp
     from ortools.constraint_solver import routing_enums_pb2
     from ortools.constraint_solver import pywrapcp
 
-    distance_matrix = scipy.spatial.distance.cdist(points, points, **kwargs) #.round().astype(int)
+    distance_matrix = scipy.spatial.distance.cdist(points, points, **kwargs)
     num_points = len(points)
 
     if penalty_weight > 0 and penalty_func is not None:
@@ -279,6 +291,7 @@ def heuristic_solve(points, time_limit_minutes=1/30, penalty_func=None, penalty_
         from_node = manager.IndexToNode(from_idx)
         to_node = manager.IndexToNode(to_idx)
         return distance_matrix[from_node][to_node]
+
     transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)

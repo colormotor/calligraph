@@ -110,43 +110,6 @@ def split_cubic(bez, t):
     return np.array([p1, p12, p123, p1234]), np.array([p1234, p234, p34, p4])
 
 
-def spline_to_bezier(tck):
-    from scipy.interpolate import insert
-
-    """
-    Implementation of Boehm's knot insertion alg, based on https://github.com/zpincus/zplib/blob/930b4b88633c95c7f7761d0183aec882484f00bc/zplib/curve/interpolate.py
-    Convert a parametric spline into a sequence of Bezier curves of the same degree.
-    Returns a list of Bezier curves of degree k that is equivalent to the input spline.
-    Each Bezier curve is an array of shape (k+1,d) where d is the dimension of the
-    space; thus the curve includes the starting point, the k-1 internal control
-    points, and the endpoint, where each point is of d dimensions."""
-    t, c, k = tck
-    old_t = np.array(t)
-    dim = len(c)
-    # the first and last k+1 knots are identical in the non-periodic case, so
-    # no need to consider them when increasing the knot multiplicities below
-    knots_to_consider = np.unique(t[k + 1 : -k - 1])
-    # For each unique knot, bring its multiplicity up to the next multiple of k+1
-    # This removes all continuity constraints between each of the original knots,
-    # creating a set of independent Bezier curves.
-    desired_multiplicity = k + 1
-
-    for x in knots_to_consider:
-        current_multiplicity = np.sum(old_t == x)
-        remainder = current_multiplicity % desired_multiplicity
-        if remainder != 0:
-            # add enough knots to bring the current multiplicity up to the desired multiplicity
-            number_to_insert = desired_multiplicity - remainder
-            t, c, k = insert(x, (t, c, k), m=number_to_insert)
-            for i in range(dim):
-                c[i] = c[i][: -k - 1]  # Need to look into why this is necessary
-
-    # group the points into the desired bezier curves
-    c = np.array(c).T
-
-    return np.split(c, len(c) // desired_multiplicity)
-
-
 def cubic_bspline_to_bezier_chain(P, periodic=False):
     """Converts a bspline to a Bezier chain
     Naive implementation of Bohm's algorithm for knot insertion
