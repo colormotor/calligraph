@@ -31,11 +31,10 @@ device = config.device
 dtype = torch.float32
 
 def params():
-
     save = True
     output_path = './generated/tests'
 
-    #filename = './data/spock256.jpg' #.jpg'
+    #
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gull.jpg')
     #filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gauss-1.jpg')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/dog4.jpg')
@@ -43,14 +42,14 @@ def params():
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/side-1.jpg')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sd_color.png')
     # filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gull2.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/color.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/grey-1.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/leslie.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/m1.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sd_woman_2.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/woman8.png')
     filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/theloniu.jpg')
-
+    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/spock256.jpg')
+    
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/kuf3.jpg')
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/e1.jpg')
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/stdraw1.jpg')
@@ -60,12 +59,13 @@ def params():
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/music2.jpg')
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/flo10.jpg')
     style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/flo7.jpg')
-
+    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/zcal26.jpg')
+    
     # filename = './data/utah3.jpg' #.jpg'
     #
     mask = None #'./data/utah-mask.jpg' #utah-fix.jpg' #.jpg'
     #minw, maxw = 3.5, 3.5 #0.75, 4 #5.5  # stroke width range
-    minw, maxw = 0.5, 6.5 #0.75, 4 #5.5  # stroke width range
+    minw, maxw = 3.0, 4.0 #0.5, 6.5 #0.75, 4 #5.5  # stroke width range
     degree = 5
     deriv = 3
     multiplicity = 3
@@ -74,7 +74,7 @@ def params():
     cardinal = False
     if not b_spline:
         degree = 3
-    alpha = 1.0
+    alpha = 0.5
     closed = False
 
     ablation = ''
@@ -103,7 +103,7 @@ def params():
     clipasso = False
     clip_w = 100.0 #50 #300.0
     lpips_w = 0.0 #10.0 #10.0
-    style_w = 0.0 #150.0 #200.0 #60.0 #10 #6 #5 #10 #15 #6.0
+    style_w = 100.0 #150.0 #200.0 #60.0 #10 #6 #5 #10 #15 #6.0
     distortion_scale = 0.3 #0.5 #0 #0.3 #5 #5 #0.25 #0.0 #5 #0
     patch_size = 128 #128 # 128 #64
 
@@ -227,7 +227,9 @@ def process_image(img):
 
 num_points = int(np.sum(1-img)*cfg.point_density)
 startup_paths, density_map = stroke_init.init_path_tsp(input_img,
-                                                       num_points, startup_w=cfg.startup_w)
+                                                       num_points,
+                                                       startup_w=cfg.startup_w,
+                                                       saliency_type='ood')
 
 if cfg.b_spline or cfg.cardinal:
     startup_paths = [add_multiplicity(P) for P in startup_paths]
@@ -268,7 +270,7 @@ if cfg.vary_width:
 opt = diffvg_utils.SceneOptimizer(scene,
                                   params=params,
                                   num_steps=cfg.num_opt_steps,
-                                  lr_min_scale=0.1)
+                                  lr_min_scale=0.4)
 
 
 
@@ -362,11 +364,11 @@ def frame(step):
     opt.zero_grad()
     
     # Rasterize
-    with util.perf_timer('render', verbose=verbose):
-        im = opt.render(background_image)[:,:,0].to(device)
+    with util.perf_timer('render', verbose=True): #verbose):
+        im = opt.render_gauss(background_image)[:,:,0].to(device)
 
     minw = cfg.minw
-    if cfg.width_anneal_start > 0 and step > cfg.num_opt_steps*cfg.width_anneal_start:
+    if False: #cfg.width_anneal_start > 0 and step > cfg.num_opt_steps*cfg.width_anneal_start:
         start =  cfg.num_opt_steps*cfg.width_anneal_start
         end = cfg.num_opt_steps*cfg.width_anneal_end
         t = np.clip((step - start)/(end - start), 0.0, 1.0)

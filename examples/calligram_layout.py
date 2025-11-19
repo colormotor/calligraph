@@ -183,7 +183,8 @@ opt.add_loss('mse',
                  image_losses.MultiscaleMSELoss(rgb=False), cfg.mse_w,
                  inputs=('im', 'input_img', 'mse_mul'))
 
-def curvature(points, closed=False):
+def curvature(points):
+    closed= cfg.closed
     points = points[:,:2]
     length = len(points)
 

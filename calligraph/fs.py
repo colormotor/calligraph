@@ -13,7 +13,7 @@ File system utilities
 import json, os, sys
 import numpy as np
 import dataclasses
-
+import torch
 
 def load_json(path):
     import codecs
@@ -53,6 +53,8 @@ class CustomEncoder(json.JSONEncoder):
             return float(obj)
         elif isinstance(obj, (np.ndarray,)):  #### This is the fix
             return obj.tolist()
+        elif isinstance(obj, (torch.Tensor)):
+            return obj.detach().cpu().numpy().tolist()
         elif dataclasses.is_dataclass(obj):
             return dataclasses.asdict(obj)
         return json.JSONEncoder.default(self, obj)

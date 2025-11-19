@@ -417,52 +417,6 @@ def step_cosine_lr_scheduler(optimizer, step_percent, min_scale, num_steps):
     return scheduler
 
 
-def lr_decay_scheduler(opt, lr_init, lr_fina, max_step, lr_decay_steps=0, lr_decay_mult=1):
-    def lr_lambda(step):
-        lr = learning_rate_decay(step, lr_init, lr_fina, max_step,
-                                                 lr_decay_steps=lr_decay_steps,
-                                                 lr_decay_mult=lr_decay_mult) #/lr_init
-        #print('lr' , lr)
-        return lr
-    scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_lambda, last_epoch=-1)
-    return scheduler
-
-
-def cnn_layer_names_map(cnn):
-    ''' Get a map bewtween conv_block_index formatted names and actual layer index
-    '''
-    block_num = 1
-    conv_num = 0
-    res = {}
-    for i, layer in enumerate(cnn.features):
-        if isinstance(layer, torch.nn.Conv2d):
-            conv_num += 1
-            res['conv%d_%d'%(block_num, conv_num)] = i
-        elif isinstance(layer, torch.nn.MaxPool2d):
-            block_num += 1
-            conv_num = 0
-    return res
-
-
-import ast
-
-def extract_weights_from_func(source_code, reference='mse_w'):
-    ''' Extract weights from `params()` function and normalize wrt a given ref'''
-    tree = ast.parse(source_code)
-
-    weights = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id.endswith('_w'):
-                    try:
-                        value = ast.literal_eval(node.value)
-                        if value > 0.0:
-                            weights[target.id] = value
-                    except Exception:
-                        continue  # Skip if value can't be evaluated statically
-
-    return normalize_weights(weights, reference)
 
 
 class SafeWithTupleLoader(yaml.SafeLoader):
@@ -481,6 +435,7 @@ SafeWithTupleLoader.add_multi_constructor('tag:yaml.org,2002:python/object/', ig
 
 
 def extract_weights_from_yaml(f, reference='mse_w'):
+    '''Retrieve weights (all entries with `_w`) from script parameters.'''
     with open(f, 'r') as f:
         data = yaml.load(f, Loader=SafeWithTupleLoader)
         #data = yaml.safe_load(f)
@@ -491,6 +446,7 @@ def extract_weights_from_yaml(f, reference='mse_w'):
 
 
 def normalize_weights(weights, reference='mse_w'):
+    ''' Normalize weight values wrt a given reference weight'''
     if reference not in weights:
         raise ValueError(f"Reference weight '{reference}' not found in extracted weights: {list(weights.keys())}")
 
@@ -502,10 +458,10 @@ def normalize_weights(weights, reference='mse_w'):
     return normalized_weights
 
 
-
 def custom_excepthook(type, value, traceback):
     print("Exception occurred:", value)
     pdb.post_mortem(traceback)
 
+    
 def break_on_exception():
     sys.excepthook = custom_excepthook
