@@ -36,7 +36,6 @@ except ImportError:
 
 device = config.device
 
-# TODO move to params
 cfg = lambda: None
 cfg.batch_size = 1
 cfg.use_xformers = False
@@ -215,8 +214,7 @@ class StableDiffusion(nn.Module):
             self.pipe.unet.to(memory_format=torch.channels_last)
 
         # Create model
-        self.vae = self.pipe.vae 
-        
+        self.vae = self.pipe.vae
         self.alphas = self.scheduler.alphas_cumprod.to(self.device)
         
         if cfg.use_xformers:
@@ -246,13 +244,10 @@ class StableDiffusion(nn.Module):
         if controlnet_model:
             controlnet = ControlNetModel.from_pretrained(
                 controlnet_model,
-                #"lllyasviel/sd-controlnet-scribble",
-                #"lllyasviel/sd-controlnet-mlsd",
                 torch_dtype=self.weights_dtype,
                 ).to(device)
-            # TODO: controlnet pipeline should not be necesseary here if we only use sds
             self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-                    self.model_key, #"runwayml/stable-diffusion-v1-5",
+                    self.model_key,
                     torch_dtype=self.weights_dtype,
                     # variant="fp16",
                     controlnet=controlnet,
@@ -350,7 +345,6 @@ class StableDiffusion(nn.Module):
         batch_size = latents.shape[0]
         text_embeddings = text_embeddings.to(self.weights_dtype)
         if cfg <= 1.0:
-            # 2, 77, 768 -> 1, 77, 768
             uncond_text_embedding = text_embeddings.reshape(2, -1, text_embeddings.shape[-2], text_embeddings.shape[-1])[1]
 
         unet = self.unet
@@ -378,7 +372,6 @@ class StableDiffusion(nn.Module):
                                    ).sample
 
                 uncond, cond = torch.chunk(unet_output, chunks=2)
-
                 unet_output = cond + cfg * (uncond - cond) # reverse cfg to enhance the distillation
             else:
                 timestep_model_input = self.timesteps[cur_ind_t].reshape(1, 1).repeat(cur_noisy_lat_.shape[0], 1).reshape(-1)
@@ -392,7 +385,6 @@ class StableDiffusion(nn.Module):
             next_ind_t = min(cur_ind_t + delta_t, ind_t)
             cur_t, next_t = self.timesteps[cur_ind_t], self.timesteps[next_ind_t]
             delta_t_ = next_t-cur_t if isinstance(self.scheduler, DDIMScheduler) else next_ind_t-cur_ind_t
-
             cur_noisy_lat = ddim_step(self.scheduler, unet_output, cur_t, cur_noisy_lat, -delta_t_, eta).prev_sample
             cur_ind_t = next_ind_t
 
@@ -430,7 +422,7 @@ class StableDiffusion(nn.Module):
             t = torch.randint(
                 min_step,
                 max_step + 1,
-                (latents.shape[0],), #[latents.shape[0]],
+                (latents.shape[0],),
                 dtype=torch.long,
                 device=self.device,
                 generator=self.generator
@@ -446,14 +438,13 @@ class StableDiffusion(nn.Module):
             elif self.time_schedule == 'dtc':
                 # Based on
                 # Zhang, Li & Zhang et al. (2024) HumanRef: Single Image to 3D Human Generation via Reference-Guided Diffusion
-                # Seems to nail it in terms of convergence
+                # Seems to work well
                 l = 1000/num_steps
                 delta = (2.0/num_steps)
                 tmid = guidance_opt.max_t_range - (guidance_opt.max_t_range - self.t_range[0])*np.log(1 + (np.floor(step/l)*l)/num_steps)
                 mint = tmid - delta
                 maxt = tmid + delta
                 ind_t = torch.randint(max(int(mint*self.num_timesteps), 1), min(int(maxt*self.num_timesteps), self.num_timesteps), (1, ), dtype=torch.long, generator=self.generator, device=self.device)[0]
-                print('cur min max', mint, maxt)
             elif self.time_schedule == 'dreamtime':
                 t = time_prioritize(step_ratio, self.time_prior)
                 ind_t = torch.tensor(t, dtype=torch.long, device=self.device)
@@ -499,7 +490,6 @@ class StableDiffusion(nn.Module):
                     image_embeds[0] = torch.cat([image_embeds[0], torch.zeros_like(image_embeds[0][:1])])
                 else:
                     image_embeds[0] = torch.cat([image_embeds[0]] + [torch.zeros_like(image_embeds[0][:1])]*2)
-                # torch.Size([3, 1, 257, 1280]) No Batch
                 self.added_cond_kwargs = ({"image_embeds": image_embeds})
 
             tt = t.reshape(1, 1).repeat(latents.shape[0], 1).reshape(-1)
@@ -530,7 +520,6 @@ class StableDiffusion(nn.Module):
                 target = pred_scores[0][1]
 
             # pred noise
-            # Order is
             # noise_pred_text, noise_pred_uncond (negative), noise_pred_null (inverse)
             if self.has_controlnet:
                 # When using "guess mode" the controlnet implementation runs only on the conditional branch
@@ -565,7 +554,7 @@ class StableDiffusion(nn.Module):
                         ctrl_text_embeddings,
                         controlnet_cond=image_cond,
                         conditioning_scale=self.conditioning_scale,
-                        guess_mode = self.guess_mode and self.guess_mode_reweight,
+                        guess_mode=self.guess_mode and self.guess_mode_reweight,
                         return_dict=False,
                     )
    
@@ -594,7 +583,6 @@ class StableDiffusion(nn.Module):
                 for td in schedule:
                     latent_model_input = torch.cat([latents_denoised] * 3).to(self.weights_dtype)
                     t_input = torch.ones_like(tt)*td
-                    
                     noise_pred = self.unet(
                         latent_model_input,
                         t_input,
@@ -729,19 +717,18 @@ class SDSLoss(StableDiffusion):
         else:
             align_corners = None #False
         if image_cond is not None:
-            image_cond = to_batch(image_cond, False) #*2.0 - 1.0 #self.rgb)
+            image_cond = to_batch(image_cond, False)
             if self.size[0] != image_cond.shape[-2] or self.size[1] != image_cond.shape[-1]:
-                print('SDS: resizing cond image')
+                #print('SDS: resizing cond image')
                 image_cond = torch.nn.functional.interpolate(image_cond, mode=interp_mode, size=self.size, align_corners=align_corners)
-                print('shape: ', image_cond.shape)
+                #print('shape: ', image_cond.shape)
             image_cond = image_cond.to(self.weights_dtype)
         if self.uncrop_size[0] != img.shape[-2] or self.uncrop_size[1] != img.shape[-1]:
             #print('resizing input', img.shape, self.uncrop_size)
-            print('SDS: resizing target image')
+            #print('SDS: resizing target image')
             img = torch.nn.functional.interpolate(img, mode=interp_mode, size=self.uncrop_size, align_corners=align_corners)
-            print('shape: ', img.shape)
+            #print('shape: ', img.shape)
 
-            
         img = img.to(self.weights_dtype)
 
         if self.augment > 0:
@@ -793,28 +780,3 @@ class SDSLoss(StableDiffusion):
         targets = (latent_z - grad_z).detach()
         loss = 0.5 * F.mse_loss(latent_z.float(), targets, reduction='sum') / latent_z.shape[0]
         return loss
-
-        # print("SDS Grad norm: ", self.grad_norm)
-        # sds_loss = SpecifyGradient.apply(latent_z, grad_z)
-        # return sds_loss
-
-
-# =============================================
-# ===== Helper function for SDS gradients =====
-# =============================================
-
-class SpecifyGradient(torch.autograd.Function):
-    @staticmethod
-    @custom_fwd
-    def forward(ctx, input_tensor, gt_grad):
-        ctx.save_for_backward(gt_grad)
-        # return torch.norm(gt_grad).detach()
-        # we return a dummy value 1, which will be scaled by amp's scaler so we get the scale in backward.
-        return torch.ones(1, device=input_tensor.device, dtype=input_tensor.dtype)[0]
-
-    @staticmethod
-    @custom_bwd
-    def backward(ctx, grad_scale):
-        gt_grad, = ctx.saved_tensors
-        gt_grad = gt_grad * grad_scale
-        return gt_grad, None
