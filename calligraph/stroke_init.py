@@ -79,14 +79,23 @@ def init_paths_random(img, n, num_ctrl, sigma=2.5, k=7, tau=0.2, use_attention=T
                       edges=edges))
     
 
-
-
-def init_path_tsp(img, n, nb_iter=30, mask=None, startup_w=None, minutes_limit=1/30, **kwargs):
+def init_path_tsp(img, n, nb_iter=30,
+                  saliency_type='intensity',
+                  mask=None,
+                  startup_w=None,
+                  closed=False,
+                  minutes_limit=1/30, **kwargs):
+    from . import tsp_art, saliency
     # Saliency
-    #sal = segmentation.clip_saliency(input_img)
-    from . import ood_saliency, tsp_art
-    sal = ood_saliency.compute_saliency(img.convert('RGB'))[0]
-
+    if type(img)==np.ndarray:
+        img = Image.fromarray((img*255).astype(np.uint8))
+    if saliency_type=='ood':
+        sal = saliency.ood_compute(img.convert('RGB'))[0]
+    elif saliency_type=='clip':
+        sal = segmentation.clip_saliency(input_img)
+    else:
+        sal = np.array(img.convert('L'))/255
+        
     density_map = ((sal-sal.min())/(sal.max() - sal.min()))**2 #(sal*(1-img))
     if mask is not None:
         density_map *= mask
@@ -99,7 +108,11 @@ def init_path_tsp(img, n, nb_iter=30, mask=None, startup_w=None, minutes_limit=1
     I = sorted(list(range(n)), key=lambda i: P[i])
     points = np.array([points[i] for i in I])
     # TSP func assumes first and last points are fixed if cylce is True and end_to_end is True
-    I = tsp_art.heuristic_solve(points, time_limit_minutes=minutes_limit, cycle=False, end_to_end=True) #, logging=True, verbose=True)
+    I = tsp_art.heuristic_solve(points,
+                                time_limit_minutes=minutes_limit,
+                                cycle=closed,
+                                end_to_end=not closed,
+                                **kwargs) #, logging=True, verbose=True)
     P = points[I]
     if startup_w is not None:
         P = np.hstack([P, np.ones((len(P), 1))*startup_w])

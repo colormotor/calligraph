@@ -8,6 +8,7 @@
                     (_/       (_/
 
 Mostly adpated from https://github.com/nimaid/python-tspart
+TSP optimization uses OR-tools
 """
 
 import numpy as np

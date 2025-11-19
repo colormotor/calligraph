@@ -7,6 +7,7 @@
 (______)             .-/       .-/
                     (_/       (_/
 
+image manipulation utils
 '''
 
 import numpy as np

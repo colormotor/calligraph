@@ -81,8 +81,6 @@ def make_bbox_loss(box, pad = 5):
     return bbox_loss
 
 
-### Bending loss
-
 def bending_loss(
         nodes,
         cyclic,
@@ -289,7 +287,6 @@ def randspace(a, b, n, minstep=0.1, maxstep=0.6):
     v = v / np.sum(v)
     v = np.cumsum(v)
     return a + v*(b-a)
-
 
 
 def repulsion_kernel_semi_vectorized(p, Tp, d0=10, eps=2e-1, signed=True, batch_size=512):

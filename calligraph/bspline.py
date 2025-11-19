@@ -14,15 +14,20 @@ def is_number(x):
     return isinstance(x, numbers.Number)
 
 def Nk(k, der=0):
+    '''Uniform B-spline basis'''
     basis_knots = np.linspace(0, k, k+1)
     bsp = BSpline.basis_element(basis_knots).derivative(der)
     return lambda u: bsp(np.clip(u, 0, k))
 
 def add_multiplicity(Q, multiplicity, noise=0.0):
+    '''Repeat key-points of input, resulting in sharper turns and additional
+       degrees of freedom for smoothing'''
     Q = np.kron(Q, np.ones((multiplicity, 1)))
     return Q + np.random.uniform(-noise, noise, Q.shape)
 
 def keypoint_times(P, t, k, mult=1, closed=False):
+    '''Approximate occurrence of curvature extrema along spline,
+    given key-point multiplicity, will work with odd multiplicity only'''
     p = k-1
 
     if closed:
@@ -101,6 +106,8 @@ def retrieve_control_points(C, k, mult, closed):
 
 def bspline_samples(P, num_or_u, k, deriv=0, mult=1, closed=False,
                     get_tc=False, output={}):
+    ''' Sample a bspline defined by key-points P,
+    assuming multiplicity has been set by user on P'''
     if not is_number(deriv):
         return [bspline_samples(P, num_or_u, k, d, mult, closed, False, output=output) for d in deriv]
     t, C = tc(P, k, mult, closed)
@@ -110,6 +117,7 @@ def bspline_samples(P, num_or_u, k, deriv=0, mult=1, closed=False,
     return X
 
 
+# Compute once as this will be slow for realtime
 gramian_cache = {}
 bgramian_cache = {}
 
@@ -191,6 +199,7 @@ def compute_smoothing_bspline(Q, mult=1, der=3, k=6, r=1000, sigma=1.0,
                             closed=False,
                             constrain=True,
                             get_keypoints=True):
+    ''' Smoothing b-spline that tracks key-points in Q'''
     dim = len(Q[0])
     p = k - 1
     # Add multiplicity
@@ -296,7 +305,14 @@ def compute_smoothing_bspline(Q, mult=1, der=3, k=6, r=1000, sigma=1.0,
     return t, C
 
 
+def smoothing_bspline(Q, num_or_u, k=6, deriv=0, **kwargs):
+    '''Smoothing spline samples for key-points `Q`'''
+    t, C = compute_smoothing_bspline(Q, get_keypoints=False, **kwargs)
+    return eval_bspline(t, C, k, num_or_u, deriv)
+
+
 def eval_bspline(t, C, k, num_or_u, deriv=0, output={}):
+    ''' Evaluate a B-pline given knots `t` control points `C` and order `k` (degree+1)'''
     if not is_number(deriv):
         return [eval_bspline(t, C, k, num_or_u, d) for d in deriv]
 
@@ -321,11 +337,6 @@ def eval_bspline(t, C, k, num_or_u, deriv=0, output={}):
     Chat = np.hstack(C)
     X = (Bu@Chat).reshape(len(u), dim)
     return X
-
-
-def smoothing_bspline(Q, num_or_u, k=6, deriv=0, **kwargs):
-    t, C = compute_smoothing_bspline(Q, get_keypoints=False, **kwargs)
-    return eval_bspline(t, C, k, num_or_u, deriv)
 
 
 def bspline_to_bezier_mat(n):
