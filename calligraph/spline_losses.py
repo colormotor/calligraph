@@ -176,7 +176,7 @@ def make_overlap_loss(alpha, lumi=0.0, bg_lumi=1.0, blur=2, subtract_widths=Fals
             return overlap_loss
     return Loss()
 
-
+### Repulsion loss converted to PyTorch from https://github.com/kenji-tojo/fab3dwire
 def repulsion_kernel(p, Tp, q, Tq, d0=1, eps=1e-1):
     q0 = q
     q1 = q + Tq
@@ -212,8 +212,6 @@ def repulsion_kernel(p, Tp, q, Tq, d0=1, eps=1e-1):
 
 
 def repulsion_kernel_vectorized(p, Tp, d0=10, eps=2e-1, signed=True):
-    # Replicating this
-    # https://kenji-tojo.github.io/publications/fab3dwire/
     n_points = p.shape[0]
 
     # Cyclically shift p and Tp to generate all combinations
@@ -246,8 +244,8 @@ def repulsion_kernel_vectorized(p, Tp, d0=10, eps=2e-1, signed=True):
     else:
         mask = torch.abs(s0 * s1) > 0 # < torch.inf
     # Filter valid pairs
-    s0 = torch.abs(s0[mask])  # Shape: (ValidPairs,)
-    s1 = torch.abs(s1[mask])  # Shape: (ValidPairs,)
+    s0 = torch.abs(s0[mask])  
+    s1 = torch.abs(s1[mask])
     if s0.numel() == 0:  # Return zero loss if no valid pairs
         return torch.tensor(0.0, requires_grad=True, device=p.device)
 
@@ -290,31 +288,32 @@ def randspace(a, b, n, minstep=0.1, maxstep=0.6):
 
 
 def repulsion_kernel_semi_vectorized(p, Tp, d0=10, eps=2e-1, signed=True, batch_size=512):
+    ''' Helps with memory issues'''
     n_points = p.shape[0]
     total_loss = 0.0
 
     for i_start in range(0, n_points, batch_size):
         i_end = min(i_start + batch_size, n_points)
 
-        p_batch = p[i_start:i_end]      # (B, D)
-        Tp_batch = Tp[i_start:i_end]    # (B, D)
+        p_batch = p[i_start:i_end]
+        Tp_batch = Tp[i_start:i_end]
 
         # Expand p_batch against all other points
-        pi = p_batch.unsqueeze(1)       # (B, 1, D)
-        Tpi = Tp_batch.unsqueeze(1)     # (B, 1, D)
+        pi = p_batch.unsqueeze(1) 
+        Tpi = Tp_batch.unsqueeze(1)
 
-        pj = p.unsqueeze(0)             # (1, N, D)
-        Tpj = Tp.unsqueeze(0)           # (1, N, D)
+        pj = p.unsqueeze(0)
+        Tpj = Tp.unsqueeze(0)
 
         # Skip self-interaction
         mask_self = (torch.arange(i_start, i_end, device=p.device).unsqueeze(1) != torch.arange(n_points, device=p.device).unsqueeze(0))  # (B, N)
 
         # Compute r0, r1
-        r0 = pj - pi         # (B, N, D)
-        r1 = (pj + Tpj) - pi # (B, N, D)
+        r0 = pj - pi         
+        r1 = (pj + Tpj) - pi 
 
-        s0 = torch.sum(r0 * Tpi, dim=2)  # (B, N)
-        s1 = torch.sum(r1 * Tpi, dim=2)  # (B, N)
+        s0 = torch.sum(r0 * Tpi, dim=2)
+        s1 = torch.sum(r1 * Tpi, dim=2)
 
         if signed:
             mask = (s0 * s1 < 0) & mask_self
