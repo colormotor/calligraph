@@ -31,134 +31,85 @@ device = config.device
 dtype = torch.float32
 
 def params():
+    # Script parameters
+    # These are automatically converted to named script arguments
+    # Currently requires booleans to be 0 or 1 to work from cmd-line
     save = True
     output_path = './generated/tests'
 
-    #
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gull.jpg')
-    #filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gauss-1.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/dog4.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/normalized.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/side-1.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sd_color.png')
-    # filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/gull2.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/grey-1.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/leslie.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/m1.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sd_woman_2.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/woman8.png')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/theloniu.jpg')
-    filename = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/spock256.jpg')
+    filename = './data/spock.jpg'
+    #filename = './data/dog4.jpg'
+    style_path = './data/style_imgs/music.jpg'
+    #style_path = './data/style_imgs/zcal2.jpg' 
     
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/kuf3.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/e1.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/stdraw1.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/flo4.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/pat1.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/zcal10.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/music2.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/flo10.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/flo7.jpg')
-    style_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/zcal26.jpg')
-    
-    # filename = './data/utah3.jpg' #.jpg'
-    #
     mask = None #'./data/utah-mask.jpg' #utah-fix.jpg' #.jpg'
-    #minw, maxw = 3.5, 3.5 #0.75, 4 #5.5  # stroke width range
-    minw, maxw = 3.0, 4.0 #0.5, 6.5 #0.75, 4 #5.5  # stroke width range
+
+    minw, maxw = 0.5, 4.0 
     degree = 5
     deriv = 3
     multiplicity = 3
-    b_spline = 1
-    pspline = False
-    cardinal = False
+    b_spline = 1      
+    pspline = False  # If 1 use penalized spline smoothing approach
+    cardinal = False # If 1 uses Catmull-Rom splines (no smoothing)
     if not b_spline:
         degree = 3
-    alpha = 0.5
+    alpha = 1.0
     closed = False
 
-    ablation = ''
+    ref_size_factor = 1.0
+    point_density = 0.002 #3 #5
+    startup_width = 1.0
 
-    lr_pos = 3.0 #5.0 #5.0 #2.0 #2.0 #3.0 # 5.0 # 6 #1.5
+    lr_pos = 3.0 
     lr_width = 0.5
     num_opt_steps = 300 #300 #150
     vary_width = True
-    width_anneal_start = 0.0 #0.4 #
+    width_anneal_start = 0.0 #0.4 # Use > 0 to anneal stroke widths to zero
     width_anneal_end = 0.75
 
-    ref_size_factor = 1.0
-
-    single_path = 1
-    point_density = 0.001 #3 #5
-    
     ood = 1
-    smoothing_w = 9000.0 #100.0 #0.0 #1000.0 #5000 #3000 #OK #15000 # 500 #50 #10.0 #10.0 20 #1000.0 #1 #1 #1 #500.0 #1 #1000 #3000.0
-
-    target_radius = 30
-    curv_w = 0 #10 #1000 #20 # 20.0 #0.0 #5.0 #10.0
-
-    blip = False
-    blip_w = 0.1
+    smoothing_w = 9000.0 
 
     clipasso = False
-    clip_w = 100.0 #50 #300.0
-    lpips_w = 0.0 #10.0 #10.0
-    style_w = 100.0 #150.0 #200.0 #60.0 #10 #6 #5 #10 #15 #6.0
-    distortion_scale = 0.3 #0.5 #0 #0.3 #5 #5 #0.25 #0.0 #5 #0
-    patch_size = 128 #128 # 128 #64
+    clip_w = 100.0 
+    lpips_w = 0.0 
+    style_w = 60.0 
+    distortion_scale = 0.3 
+    patch_size = 128 
 
-    clip_layer_weights = [(2, 1.0), (3, 1.0)] #, (5, 0.1)]
-    #clip_layer_weights = [(2, 1.0), (3, 1.0), (6, 1.0)] #, (1, 0.4)]
-    clip_layer_weights = [(2, 0.2), (4, 1.0), (8, 1.0)] #, (1, 0.4)]
     clip_layer_weights = [(2, 1.0), (3, 1.0), (6, 1.0)] #, (6, 1.0)] #, (1, 0.4)]
     clip_model='CLIPAG'
-    clip_model='ViT-B-32-256' #'ViT-L-14' #'ViT-B-16-SigLIP-384' #'CLIPAG' #ViT-B-16' #'CLIPAG'
+    clip_semantic_w = 0.0
 
     canny_sigma=1.0 #5
-    sds = not clipasso and not blip
+    sds = not clipasso
     if sds and clipasso:
         clip_w = 100
+        
     sds_w = 1.0
     cond_scale = 0.7 #0.8 #6 #4 #0.7 #9 #4
     guess_mode = True
     if not guess_mode:
         cond_scale = 0.51
     ip_adapter = True
-    ip_scale = 0.9 #0.5 #0.2 #0.9 #0.4 #0.9
-    cfg = 7.5 #10 #7.5 #14.0 #7.5
-    t_min, t_max = 0.5, 0.98
-    t_min, t_max = 0.01, 0.98
-    t_min, t_max = 0.7, 0.98
-    t_min, t_max = 0.1, 0.98
-    t_min, t_max = 0.5, 0.98
-    t_min, t_max = 0.6, 0.98 #okish
-    t_min, t_max = 0.65, 0.98 #okish
-    t_min, t_max = 0.7, 0.98 # THICK
-    t_min, t_max = 0.6, 0.98 # THICK
+    ip_scale = 0.9 
+    cfg = 7.5 
 
-    grad_method = 'ism' #sds #ism
-    if clipasso:
-        t_min, t_max = 0.02, 0.5
+    t_min, t_max = 0.5, 0.98 
+
+    grad_method = 'ism' #either 'sds' or 'ism'
+    
     prompt = "A single line pen drawing, single stroke, thin line"
     prompt = "An architectural drawing"
     prompt = "A pencil sketch, thin strokes"
     prompt = "A black and white ink drawing"
     
-    overlap_w = 0 #100.0
-    blur = 1
-
-    clip_semantic_w = 0.01 #1
-
     bbox_w = 10.0
 
-    repulsion_subd = 15
-    repulsion_w = 0
-
-    startup_w = 1
     mse_w = 0.0
     mse_mul = 1 # Factor multiplying each mse blur level (> 1 emph low freq)
 
-    seed = 333 #1233
+    seed = 333 
     num_iterations = 1
 
     suffix=''
@@ -228,7 +179,7 @@ def process_image(img):
 num_points = int(np.sum(1-img)*cfg.point_density)
 startup_paths, density_map = stroke_init.init_path_tsp(input_img,
                                                        num_points,
-                                                       startup_w=cfg.startup_w,
+                                                       startup_w=cfg.startup_width,
                                                        saliency_type='ood')
 
 if cfg.b_spline or cfg.cardinal:
@@ -365,10 +316,10 @@ def frame(step):
     
     # Rasterize
     with util.perf_timer('render', verbose=True): #verbose):
-        im = opt.render_gauss(background_image)[:,:,0].to(device)
+        im = opt.render(background_image)[:,:,0].to(device)
 
     minw = cfg.minw
-    if False: #cfg.width_anneal_start > 0 and step > cfg.num_opt_steps*cfg.width_anneal_start:
+    if cfg.width_anneal_start > 0 and step > cfg.num_opt_steps*cfg.width_anneal_start:
         start =  cfg.num_opt_steps*cfg.width_anneal_start
         end = cfg.num_opt_steps*cfg.width_anneal_end
         t = np.clip((step - start)/(end - start), 0.0, 1.0)
@@ -425,10 +376,16 @@ def frame(step):
 
         plt.subplot(gs_sub[0,0])
         if cfg.clipasso:
+            plt.title('Clip aug')
             plt.imshow(clip_loss.y_augs[1])
         if cfg.sds:
+            plt.title('Cond image')
             plt.imshow(np.array(cond_img))
+        plt.subplot(gs_sub[0,1])
+        plt.title('Saliency')
+        plt.imshow(density_map)
         plt.subplot(gs_sub[0,2])
+        plt.title(f'Style, w:{cfg.style_w}')
         plt.imshow(np.array(style_img), cmap='gray')
         # with util.perf_timer('Thick curves', verbose=verbose):
         #     for i, path in enumerate(scene.shapes):

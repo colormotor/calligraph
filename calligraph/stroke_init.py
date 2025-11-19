@@ -85,12 +85,12 @@ def init_path_tsp(img, n, nb_iter=30,
                   startup_w=None,
                   closed=False,
                   minutes_limit=1/30, **kwargs):
-    from . import tsp_art, saliency
+    from . import tsp_art, segmentation
     # Saliency
     if type(img)==np.ndarray:
         img = Image.fromarray((img*255).astype(np.uint8))
     if saliency_type=='ood':
-        sal = saliency.ood_compute(img.convert('RGB'))[0]
+        sal = segmentation.ood_saliency(img.convert('RGB'))[0]
     elif saliency_type=='clip':
         sal = segmentation.clip_saliency(input_img)
     else:
