@@ -15,8 +15,7 @@ from calligraph import (plut,
                         dce,
                         config,
                         util,
-                        walks,
-                        files,
+                        fs,
                         diffvg_utils,
                         imaging,
                         dslm,
@@ -35,74 +34,29 @@ dtype = torch.float32
 def params():
     size = 350
     padding = 5
-    text = 'A'
-    font = './data/NoamText-Bold.ttf' #Candice.ttf'
-    image_path = './data/spock256.jpg'
-    minw, maxw = 0.5, 1.5  # stroke width range
-    degree = 5
-    deriv = 3
-    multiplicity = 3
-    b_spline = False
-    ref_size_factor = 0.5
     fill = 0
-    closed = True #True
-    if not closed:
-        fill = 0
     seed = 133
-    alpha =  1 #0.5 #0.5 #0.5 # 1.0 #0.5 #0.5
+    alpha =  1 
     image_alpha = 1
 
-    output_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/outputs/')
-
-    num_paths = 4 #30
-    num_vertices_per_path = 15
-    spread_radius = 30
-
-    # num_voronoi_points = 240
+    output_path = './generated' #os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/outputs/')
 
     lr_shape = 2.0
     lr_width = 0.3
     lr_delta_t = 0.05
-    lr_delta = 0.1 #0.05 #0.05 # 0.08
-    lr_Ac = 0 #0.001 #01 #0.01
+    lr_delta = 0.1
+    lr_Ac = 0 # >0 to optimize also lognormal asymmetry
     num_opt_steps = 300 # 500
-    schedule_decay_factor = 1.5
-
-    smoothing_w = 0.7 #4 # 0.2 #1 # 0.5 #0.1 #0.1 #0.0001 #000001
-    smoothing_warmup = 0 #100 # 30 #50
+    
+    smoothing_w = 0.7 
+    smoothing_warmup = 0 
     use_clipag = 1
-    semantic_w = 0 # 0.005 #3 #25 #0.25
-
-    overlap_w = 0 #1000.0
-    blur = 0
-    if overlap_w > 0:
-        alpha = 0.5
-
-    repulsion_subd = 15
-    repulsion_w = 3000 # 500
-    if not closed:
-        repulsion_w = 0
-    target_radius = 30 #5 #15 #7
-    curv_w = 0 #100 #5 #30 #10 #10000.0
-
-    C = 4
-    start_ang = 0
-    orient_w = 0 #100 #100 #15
-    normalize_orient = False
-    if not normalize_orient:
-        orient_w *= 0.1
-
-    image_flow = 0
-    flow_w = 1
-    flow_subd = 10
-    normalize_flow = True
 
     mse_w = 200.0
-    mse_mul = 1 #0.5 # Factor multiplying each mse blur level (> 1 emph low freq)
+    mse_mul = 1 # Factor multiplying each mse blur level (> 1 emph low freq)
 
     stroke_w = 3
     vary_width = 0
-    single_path = 1
     return locals()
 
 cfg = util.ConfigArgs(params())
@@ -116,19 +70,21 @@ saver = util.SaveHelper(__file__, output_path, use_wandb=cfg.headless,
 from py5canvas import Canvas
 
 #S = files.load_gml('./data/janke_gml_1.json') #
-#S = files.load_gml('./data/gml/49867.json') #janke_gml_1.json') #[1:2]
-S = files.load_json(os.path.expanduser('~/Dropbox/develop_box/emot_drawing/caz.mp4.json'))
-#S = geom.tsm(geom.scaling_2d([1.0,-1.0]), S)
+S = fs.load_gml('./data/gml/49867.json') #janke_gml_1.json') #[1:2]
+#S = files.load_json(os.path.expanduser('~/Dropbox/develop_box/emot_drawing/caz.mp4.json'))
 S = geom.transform_to_rect(S, geom.make_rect(0, 0, cfg.size, cfg.size), padding=20)
-#P = geom.shapes.star(cfg.size/3, center=[cfg.size/2, cfg.size/2])
-#P = geom.close(P)
-c = Canvas(cfg.size, cfg.size)
-c.background(255)
-c.stroke(0)
-c.no_fill()
-c.stroke_weight(cfg.stroke_w*2)
-c.shape(S)
-input_img = c.Image().convert('L')
+
+fig = plut.figure_pixels(cfg.size, cfg.size)
+plut.stroke(S, 'k', lw=cfg.stroke_w*2)
+input_img = plut.figure_image(close=True)
+
+# c = Canvas(cfg.size, cfg.size)
+# c.background(255)
+# c.stroke(0)
+# c.no_fill()
+# c.stroke_weight(cfg.stroke_w*2)
+# c.shape(S)
+# input_img = c.Image().convert('L')
 #P = geom.shapes.star(cfg.size/2.2, center=[cfg.size/2, cfg.size/2])
 #P = geom.close(P)
 #pad = 50

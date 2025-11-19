@@ -744,33 +744,10 @@ def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density
         else:
             data = np.delete(data, I, axis=0)
 
-    #maxs = np.max(s)
-    #s = s/maxs
-    #delta_s = delta_s/maxs #np.max(s)
-
-    # if inv_density is not None:
-    #     inv_density = inv_density[:-1]
-    #     inv_density = inv_density - np.min(inv_density)
-    #     inv_density /= np.max(inv_density)
-    #     density = density #1.0 - inv_density
-    #     s = (1.0 - density_weight)*s + density_weight*density
     u = np.cumsum(np.concatenate([[0.], s]))
     u = u / u[-1]
     n = int(np.ceil(np.sum(s) / delta_s))
-    print('uniformsample', u[0], u[-1], n)
     t = np.linspace(u[0], u[-1], n)
-
-    # if inv_density is not None:
-    #     inv_density = inv_density - np.min(inv_density)
-    #     inv_density /= np.max(inv_density)
-    #     inv_density = np.clip(inv_density, 0.75, 1.0)
-    #     param = np.cumsum(1-inv_density)
-    #     param = param - np.min(param)
-    #     param = param / np.max(param)
-
-    #     u = u*param #(1.0 - density_weight) + param*density_weight
-    #     u = u/u[-1]
-
     f = interp1d(u, X.T, kind=kind)
     Y = f(t)
 

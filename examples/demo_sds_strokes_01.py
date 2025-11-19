@@ -77,11 +77,11 @@ def params():
     smoothing_w = 200.0
 
     clipasso = False
-    clip_w = 100.0
-    lpips_w = 0.0
-    style_w = 150.0
-    distortion_scale = 0.3
-    patch_size = 128
+    clip_w = 100.0 
+    lpips_w = 0.0 
+    style_w = 200.0 
+    distortion_scale = 0.3 
+    patch_size = 128 
 
     clip_layer_weights = [(2, 1.0), (3, 1.0), (4, 1.0)]  # , (6, 1.0)] #, (1, 0.4)]
     clip_model = "CLIPAG"
