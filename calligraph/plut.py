@@ -362,40 +362,6 @@ def font_to_outlines(text, rect=None, padding=0, font_path=None,
     return outlines
 
 
-# def font_to_image(text, image_size, padding=10, font_path=None, grayscale=True):
-
-#     font_size = 60
-#     if font_path:
-#         font_prop = FontProperties(fname=font_path, size=font_size)
-#     else:
-#         font_prop = FontProperties(size=font_size)  # Default font
-
-#     text_path = TextPath((0, 0), text, prop=font_prop)
-
-#     vertices = text_path.vertices.copy()  # Points along the path
-#     codes = text_path.codes        # Commands (e.g., MOVETO, LINETO)
-
-#     vertices[:,1] *= -1 # Y is flipped
-#     box = geom.make_rect(0, 0, image_size[0], image_size[1])
-#     src_box = geom.bounding_box(vertices)
-#     mat = geom.rect_in_rect_transform(src_box, box, padding=padding)
-#     vertices = geom.tsm(mat, vertices)
-#     text_path = Path(vertices, codes)
-
-#     fig, ax = plt.subplots(figsize=(image_size[0] / 100, image_size[1] / 100), dpi=100)
-#     patch = PathPatch(text_path, facecolor="k", edgecolor="none")
-#     ax.add_patch(patch)
-#     setup(box=box)
-
-#     buf = BytesIO()
-#     plt.savefig(buf, format='png')
-#     plt.close(fig)
-#     buf.seek(0)
-
-#     image = Image.open(buf)
-#     if grayscale:
-#         image = image.convert("L")
-#     return image
 
 def set_theme():
     plt.style.use('fivethirtyeight') #fivethirtyeight')

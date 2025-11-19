@@ -8,9 +8,6 @@
                     (_/       (_/
 
 Loss functions for image comparison
-
-TODO what?? Adapted from:
-- https://github.com/jiupinjia/stylized-neural-painting
 """
 
 import importlib
@@ -387,90 +384,6 @@ class LPIPS(torch.nn.Module):
         return self.LPIPS(x, y)
 
 
-class VGGPerceptualLoss(torch.nn.Module):
-    """VGG perceptual loss
-    TODO: Test RGB
-    """
-
-    def __init__(
-        self, rgb=True, resize=True, distortion_scale=0.5, crop_scale=(0.8, 1.0)
-    ):
-        super(VGGPerceptualLoss, self).__init__()
-        vgg = torchvision.models.vgg16(pretrained=True).to(device)
-        blocks = []
-        blocks.append(vgg.features[:4].eval())
-        blocks.append(vgg.features[4:9].eval())
-        blocks.append(vgg.features[9:16].eval())
-        blocks.append(vgg.features[16:23].eval())
-        for bl in blocks:
-            for p in bl:
-                p.requires_grad = False
-        self.blocks = torch.nn.ModuleList(blocks)
-        self.transform = torch.nn.functional.interpolate
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).to(device)
-        self.std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).to(device)
-        self.resize = resize
-        self.rgb = rgb
-        self.distortion_scale = distortion_scale
-        self.crop_scale = crop_scale
-
-    def forward(self, input, target, ignore_color=False):
-        # Assume 0-1 input
-        input = to_batch(input, self.rgb)
-        target = to_batch(target, self.rgb).to(dtype=input.dtype)
-
-        self.mean = self.mean.type_as(input)
-        self.std = self.std.type_as(input)
-        if ignore_color:
-            input = torch.mean(input, dim=1, keepdim=True)
-            target = torch.mean(target, dim=1, keepdim=True)
-        # if input.shape[1] != 3:
-        #    input = input.repeat(1, 3, 1, 1)
-        #    target = target.repeat(1, 3, 1, 1)
-        input = (input - self.mean) / self.std
-        target = (target - self.mean) / self.std
-        if self.resize:
-            input = self.transform(
-                input, mode="bilinear", size=(224, 224), align_corners=False
-            )
-            target = self.transform(
-                target, mode="bilinear", size=(224, 224), align_corners=False
-            )
-        loss = 0.0
-
-        x = input
-        y = target
-
-        # init augmentations
-        augment_list = []
-        if self.distortion_scale > 0.0:
-            augment_list.append(
-                transforms.RandomPerspective(
-                    fill=1, p=1.0, distortion_scale=self.distortion_scale
-                )  # 0.5)
-            )
-        augment_list.append(
-            transforms.RandomResizedCrop(224, scale=self.crop_scale, ratio=(1.0, 1.0))
-        )
-        augment_compose = transforms.Compose(augment_list)
-        # make augmentation pairs
-        x_augs, y_augs = [x], [y]
-        # repeat N times
-        for n in range(4):
-            augmented_pair = augment_compose(torch.cat([x, y]))
-            x_augs.append(augmented_pair[0].unsqueeze(0))
-            y_augs.append(augmented_pair[1].unsqueeze(0))
-
-        x = torch.cat(x_augs, dim=0)
-        y = torch.cat(y_augs, dim=0)
-
-        for block in self.blocks:
-            x = block(x)
-            y = block(y)
-            loss += torch.nn.functional.l1_loss(x, y)
-        return loss
-
-
 def get_model_image_size(processor):
     """
     Safely extract image input size from a Hugging Face processor.
@@ -605,19 +518,8 @@ class VisionEncoderLoss(torch.nn.Module):
 
         img_src = torch.cat(src_imgs, dim=0)
         img_tgt = torch.cat(tgt_imgs, dim=0)
-        # img_src = self.resize_normalize(img_src)
-        # img_tgt = self.resize_normalize(img_tgt)
-
-        # return self.metric(img_src, img_tgt) #src_inputs, tgt_inputs)
         src_inputs = img_src
         tgt_inputs = img_tgt
-        # src_inputs = self.processor(img_src, return_tensors='pt', do_resize=False).pixel_values.to(device)
-
-        # tgt_inputs = self.processor(img_tgt, return_tensors='pt', do_resize=False).pixel_values.to(device)
-        # src_inputs = torch.stack(self.processor.feature_extractor(img_src, return_tensors=None)['pixel_values']).to(device)
-        # tgt_inputs = torch.stack(self.processor.feature_extractor(img_tgt, return_tensors=None)['pixel_values']).to(device)
-        # return self.metric(src_inputs, tgt_inputs)
-
         try:
             encoder = self.model.encoder
         except AttributeError:
@@ -640,11 +542,6 @@ class VisionEncoderLoss(torch.nn.Module):
                 select = lambda state: state[:, 1:, :].mean(dim=1)
             else:
                 select = lambda state: state[:, :, :]  # .mean(dim=1)
-
-        # select = lambda state: torch.cat([
-        #     state[:, 0, :]*1,                    # CLS
-        #     state[:, 1:, :].mean(dim=1)        # Patch mean
-        # ], dim=-1) #*5000
 
         if hidden:
             loss = 0
@@ -795,11 +692,6 @@ class CLIPVisualLoss(torch.nn.Module):
             ]
         )
 
-        # try:
-        #     self.input_size = preprocess.transforms[0].size[0]
-        # except TypeError:
-        #     self.input_size = preprocess.transforms[0].size
-
         self.feature_maps = OrderedDict()
 
         try:
@@ -915,44 +807,6 @@ class CLIPVisualLoss(torch.nn.Module):
         return total_loss
 
 
-def image_augmentation_clip(size, args=["Af", "Ji"]):
-    """See https://pytorch.org/vision/stable/transforms.html"""
-    items = []
-    for item in args:
-        if item == "Pe":
-            items.append(
-                transforms.RandomPerspective(fill=1, p=1, distortion_scale=0.2)
-            )
-        elif item == "Re":
-            items.append(transforms.RandomResizedCrop(size, scale=(0.8, 0.95)))
-        elif item == "Ji":
-            items.append(
-                transforms.ColorJitter(
-                    brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1
-                )
-            )
-        elif item == "Af":
-            items.append(
-                transforms.RandomAffine(
-                    degrees=10, translate=(0.1, 0.1), shear=2, fill=1
-                )
-            )
-
-    augment_trans = transforms.Compose(items)
-    return augment_trans
-
-    augment_trans = transforms.Compose(
-        [
-            transforms.RandomPerspective(fill=1, p=1, distortion_scale=0.2),
-            transforms.RandomResizedCrop(224, scale=(0.8, 0.95)),
-            transforms.ColorJitter(
-                brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1
-            ),  # , p=0.7),
-        ]
-    )
-    return augment_trans
-
-
 def load_clip_model(model_name):
     import open_clip
 
@@ -1014,39 +868,3 @@ def load_clip_model(model_name):
     tokenizer = open_clip.get_tokenizer(model_name)
     cfg.clip_models[model_name] = (model, preprocess, tokenizer, input_size)
     return model, preprocess, tokenizer, input_size
-
-
-# Based on SciPy
-# https://github.com/heroxbd/waveform-analysis/blob/ec6f50f09923cdab74e85e050245c7e1622faa9d/loss.py#L16
-def wasserstein_loss(a, b):
-    return cdf_loss(a, b, 1)
-
-
-def cdf_loss(tensor_a, tensor_b, p=1):
-    # last-dimension is weight distribution
-    # p is the norm of the distance, p=1 --> First Wasserstein Distance
-    # to get a positive weight with our normalized distribution
-    # we recommend combining this loss with other difference-based losses like L1
-
-    # normalize distribution, add 1e-14 to divisor to avoid 0/0
-    tensor_a = tensor_a / (torch.sum(tensor_a, dim=-1, keepdim=True) + 1e-14)
-    tensor_b = tensor_b / (torch.sum(tensor_b, dim=-1, keepdim=True) + 1e-14)
-    # make cdf with cumsum
-    cdf_tensor_a = torch.cumsum(tensor_a, dim=-1)
-    cdf_tensor_b = torch.cumsum(tensor_b, dim=-1)
-
-    # choose different formulas for different norm situations
-    if p == 1:
-        cdf_distance = torch.sum(torch.abs((cdf_tensor_a - cdf_tensor_b)), dim=-1)
-    elif p == 2:
-        cdf_distance = torch.sqrt(
-            torch.sum(torch.pow((cdf_tensor_a - cdf_tensor_b), 2), dim=-1)
-        )
-    else:
-        cdf_distance = torch.pow(
-            torch.sum(torch.pow(torch.abs(cdf_tensor_a - cdf_tensor_b), p), dim=-1),
-            1 / p,
-        )
-
-    cdf_loss = cdf_distance.mean()
-    return cdf_loss
