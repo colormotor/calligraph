@@ -74,7 +74,7 @@ def params():
     clipasso = False
     clip_w = 100.0 
     lpips_w = 0.0 
-    style_w = 150.0 
+    style_w = 200.0 
     distortion_scale = 0.3 
     patch_size = 128 
 
