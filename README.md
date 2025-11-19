@@ -23,7 +23,7 @@ The repository also contains code for the paper:
 ### Image-Driven Robot Drawing with Rapid Lognormal Movements
 *Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie*
 
-This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting.
+This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting (file [dslm.py](./calligraph.dslm.py)).
 
 If you use this specific part of the code for academic purposes, please cite:
 
@@ -39,10 +39,9 @@ If you use this specific part of the code for academic purposes, please cite:
 
 ## Licence
 - The code/software in this repository is licensed under the *GNU GPLv3* (see [LICENCE](./LICENCE)). 
-- Artistic/creative outputs generated with this software are licensed under *Creative Commons Attribution 4.0 International License (CC BY 4.0)*. When sharing or distributing generated works you must give appropriate credit to: *Daniel Berio, enist.org, 2025*.
+- You are encouraged to credit *Daniel Berio* (@colormotor) if using this software for artistic/creative outputs.
 
 ## Conda (recommended)
-
 The ideal way to get this working is installing the conda/mamba package manager through miniforge. On Mac/Linux, from a terminal do
 
     curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
@@ -76,7 +75,6 @@ making sure your environment is active.
 
 
 ## Install locally
-
 Finally, install locally from the repo directory with
 
     pip install -e .
@@ -84,6 +82,17 @@ Finally, install locally from the repo directory with
 
 # Examples
 
-Examples are located in the [examples](./examples) directory. By default the outputs are saved in an outputs directory. If this direcory does not exist the outut will not be saved. that will be automatically created. If this directory does not exist, no output is saved. In each example, configuration parameters are set by adding local variables to a `params()` function. These are automatically converted to command-line arguments that can be set when executing a script. 
+Examples are located in the [examples](./examples) directory. By default the outputs are saved in a `generated` subdirectory at the same level as the example. If this direcory does not exist the outut will not be saved. Create the directory or rename the parameter if you wish to save the results.
+
+## Parameter settings
+In each example, configuration parameters are set by adding local variables to a `params()` function. These are automatically converted to command-line arguments that can be set when executing a script. E.g. 
+
+``` 
+python demo_area_fill_01.py --smoothing_w=10
+```
+
+Will the set the value of the corresponding variable declared inside the `params()` function.
+
+
 
 

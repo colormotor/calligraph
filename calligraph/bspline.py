@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+'''
+ )   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+
+B-Spline construction+smoothing utilities
+'''
+
 import numpy as np
 import scipy
 from scipy.interpolate import BSpline
@@ -140,10 +151,10 @@ def uniform_gramian(nbasis, k, der, get_Gm=False):
     for i in range(nbasis):
         for j in range(i, nbasis):
             offset = j - i # j > i
-            key = (k, der, offset) #(i,j) #offset #(i,j)
+            key = (k, der, offset)
             if abs(offset) < k:
                 if key in gramian_cache:
-                    G[i, j] = G[j, i] = gramian_cache[key] #offset]
+                    G[i, j] = G[j, i] = gramian_cache[key]
                 else:
                     f = lambda x: N([x])
                     g = lambda x: N([x-(j-i)])
@@ -253,11 +264,6 @@ def compute_smoothing_bspline(Q, mult=1, der=3, k=6, r=1000, sigma=1.0,
         Wi[:sigma.shape[0],
            :sigma.shape[1]] = np.linalg.inv(sigma)
     W = block_diag(*([Wi]*len(Qm)))
-    # Add precision to the endpoints
-    #W[:(p-1)*dim,:(p-1)*dim] *= end_weight
-    #W[-(p-1)*dim:,-(p-1)*dim:] *= end_weight
-    #W[:k,:k] *= end_weight
-    # W[-k:,-k:] *= end_weight
 
     # Optimize
     if constrain:
@@ -270,18 +276,13 @@ def compute_smoothing_bspline(Q, mult=1, der=3, k=6, r=1000, sigma=1.0,
             K[-(pp)*dim:,-(pp)*dim:] = -np.eye((pp)*dim)
             ksize = pp*dim
             target = np.zeros(pp*dim)
-            #K[:, :p*dim] = np.eye(
-            #half_offset = p//2
-            #offset_remainder = p - half_offset
-            #K[:half_offset*dim, :half_offset*dim] = -np.eye(half_offset*dim)
-            #K[-half_offset*dim:, -half_offset*dim:] = np.eye(half_offset*dim)
         else:
             p1 = (p)*dim
             p2 = (p)*dim
 
             K = np.zeros((p1+p2, n*dim))
-            K[:p1, :p1] = np.eye(p1) #p*dim)
-            K[-p2:, -p2:] = np.eye(p2) #p*dim)
+            K[:p1, :p1] = np.eye(p1)
+            K[-p2:, -p2:] = np.eye(p2)
             ksize = p1 + p2
             target = np.concatenate([Cb[:p1], Cb[-p2:]])
 
@@ -289,9 +290,6 @@ def compute_smoothing_bspline(Q, mult=1, der=3, k=6, r=1000, sigma=1.0,
                       [K,                np.zeros((ksize, ksize))]])
         Chat = np.linalg.inv(L)@np.concatenate([Bb.T@W@Qb,
                                                 target])
-                                                 #Cb[:dim*p], Cb[-dim*p:]])
-                                                 #np.zeros(ksize)])
-                                                 #Cb])
         Chat = Chat[:n*dim]
     else:
         Chat = np.linalg.pinv(r*Gb + Bb.T@W@Bb)@(Bb.T@W@Qb)

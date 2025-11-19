@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+'''
+DEMO:
+Stroke-based image abstaction with score distillation sampling
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
@@ -27,6 +32,10 @@ dtype = torch.float32
 
 
 def params():
+    # Script parameters
+    # These are automatically converted to named script arguments
+    # Currently requires booleans to be 0 or 1 to work from cmd-line
+
     verbose = 0
     output_path = './generated/tests'
 
@@ -52,9 +61,9 @@ def params():
         fill = 0
     seed = 133
     alpha =  1
-    image_alpha = 0.5
+    image_alpha = 0.5 # Determines density of coverage
 
-    style_img = './data/chinese.jpg'
+    style_img = './data/style_imgs/zcal7.jpg'
 
     # For single paths
     point_density = 0.015 #0.003 # 0.015
@@ -76,8 +85,12 @@ def params():
 
     mse_w = 20.0
     mse_mul = 1
+
     sw = 2.0
     vary_width = 1
+
+    # If true final video is the output only
+    image_movie = True
 
     return locals()
 
@@ -248,7 +261,7 @@ def frame(step):
         plut.setup(box=geom.make_rect(0, 0, w, h), axis=True)
 
         plt.subplot(gs[0,1])
-        plt.title('Step %d'%step)
+        plt.title('Step %d - elapsed: %.2f'%(step, time_count))
         plt.imshow(background_image, cmap='gray', vmin=0, vmax=1)
         plt.imshow(im, cmap='gray', vmin=0, vmax=1)
         plut.setup(box=geom.make_rect(0, 0, w, h))
@@ -274,6 +287,9 @@ def frame(step):
             saver.copy_file()
             saver.collected_to_dropbox()
 
+
+    if cfg.image_movie:
+        return im
 
 if cfg.headless:
     filename = ''
