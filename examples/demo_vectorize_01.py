@@ -62,6 +62,7 @@ def to_batch(im):
 
 
 def to_palette(im, n):
+    # Naive palette from image
     im = im.quantize(n, method=Image.Quantize.MEDIANCUT, kmeans=n).convert("RGB")
     colors = im.getcolors()
     return [np.array(c[1]) / 255 for c in colors]
@@ -99,10 +100,9 @@ def params():
     sds_w = 1.0
     t_min, t_max = 0.5, 0.98
 
-    cond_scale = 0.7  # 0.8 #6 #4 #0.7 #9 #4
+    cond_scale = 0.7  
     guess_mode = True
-    ip_scale = 0.9  # 0.5 #0.2 #0.9 #0.4 #0.9
-
+    ip_scale = 0.9  
     grad_method = "sds"
     grad_method = "ism"
 
@@ -128,14 +128,13 @@ def params():
     gumbel_hard = 0
     tau_start = 1.0
 
-    style_w = 30.0
+    style_w = 10.0
     style_path = ""
     stroke_w = 0.0
     stroke_darkness = 0.5
 
     repulsion_subd = 10
     repulsion_w = 5000
-    resolve_self_ins_every = 0
     repulsion_d = 10
 
     rand_init = 2
@@ -216,14 +215,10 @@ def add_multiplicity(Q, noise=0.0):
 # Saliency
 from calligraph import ood_saliency
 
-sal = ood_saliency.compute_saliency(input_img.convert("RGB"))[0] / 255
+sal = segmentation.ood_saliency(input_img.convert("RGB"))[0] / 255
 sal *= segmentation.clip_saliency(input_img)
-# sal = np.ones((h, w))
 density_map = ((sal - sal.min()) / (sal.max() - sal.min())) ** 2  # (sal*(1-img))
 
-# sal_file = os.path.splitext(cfg.filename)[0]+'-sal.jpg'
-# if os.path.isfile(sal_file):
-#     density_map = np.array(Image.open(sal_file).convert('L').resize((w, h)))/255
 # Voronoi regions
 points, verts = tsp_art.weighted_voronoi_sampling(
     density_map, cfg.num_voronoi_points, get_regions=True, nb_iter=50
@@ -276,7 +271,6 @@ for P, clr in zip(startup_paths, colors):
         fill_color=([clr, clr, clr], True),
         split_primitives=False,
     )
-    # Currently color assignment wont work if we split
 
 # Create logits for palette
 num_colors = len(startup_paths)
@@ -531,10 +525,13 @@ def frame(step):
     plut.setup(box=geom.make_rect(0, 0, w, h))
 
     plt.subplot(gs_sub[0])
+    plt.title('Saliency')
     plt.imshow(density_map)
+    plt.title('Style')
     plt.subplot(gs_sub[1])
     plt.imshow(style_img)
     plt.subplot(gs_sub[2])
+    plt.title('Palette')
     for i, clr in enumerate(palette):
         plut.fill_rect(geom.make_rect(i, 0, 1, 1), clr.detach().cpu().numpy())
     plut.setup()
@@ -559,7 +556,6 @@ def frame(step):
             saver.copy_file()
 
 
-# frame(0)
 plut.show_animation(
     fig,
     frame,
