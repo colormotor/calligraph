@@ -23,7 +23,7 @@ The repository also contains code for the paper:
 ### Image-Driven Robot Drawing with Rapid Lognormal Movements
 *Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie*
 
-This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting (file [dslm.py](./calligraph.dslm.py)).
+This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting movements (file [dslm.py](./calligraph.dslm.py) and demos including "slm" in the filename).
 
 If you use this specific part of the code for academic purposes, please cite:
 

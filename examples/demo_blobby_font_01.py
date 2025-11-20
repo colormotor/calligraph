@@ -83,7 +83,8 @@ def params():
     mse_mul = 2 # Factor multiplying each mse blur level (> 1 emph low freq)
 
     seed = 1233
-
+    save_every = 10
+    
     return locals()
 
 
@@ -476,9 +477,9 @@ def frame(step):
     plt.legend()
 
     if saver.valid:
-        save_every = 10
+        
         store_every = 50
-        if step%save_every == save_every-1:
+        if step%cfg.save_every == cfg.save_every-1:
             saver.clear_collected_paths()
             scene.save_json(saver.with_ext('.json'), complement=complement, area=area, ctrs=ctrs)
             cfg.save_yaml(saver.with_ext('.yaml'))

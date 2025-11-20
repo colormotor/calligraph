@@ -144,6 +144,8 @@ def params():
 
     seed = 1233
     suffix = ""
+
+    save_every = 10
     return locals()
 
 
@@ -540,8 +542,8 @@ def frame(step):
     opt.plot(50)
 
     if saver.valid:
-        save_every = 10
-        if step % save_every == save_every - 1:
+        
+        if step % cfg.save_every == cfg.save_every - 1:
             saver.clear_collected_paths()
             scene.save_json(
                 saver.with_ext(".json"),
