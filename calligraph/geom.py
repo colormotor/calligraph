@@ -717,7 +717,7 @@ def dp_simplify(P, eps, closed=False):
     dtype = P.dtype
     return cv2.approxPolyDP(P.astype(np.float32), eps, closed).astype(dtype)[:,0,:]
 
-def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density=None, density_weight=0.5, eps=1e-10 ):
+def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, eps=1e-10 ):
     ''' Uniformly samples a contour at a step dist'''
     if closed:
         X = np.vstack([X, X[0]])
@@ -733,8 +733,6 @@ def uniform_sample( X, delta_s, closed=0, kind='slinear', data=None, inv_density
         X = np.delete(X, I, axis=0)
         s = np.delete(s, I)
 
-    # if inv_density is not None:
-    #     inv_density = np.delete(inv_density, I)
     if len(X) < 2:
         return X
 

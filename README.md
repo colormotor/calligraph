@@ -94,5 +94,10 @@ python demo_area_fill_01.py --smoothing_w=10
 Will the set the value of the corresponding variable declared inside the `params()` function.
 
 
+## Performance
+The demos use a Matplotlib animation to show the results. This is heavily un-optimized and can slow down optimization time. You can run the demos without displaying each step by running the demos with the option `--headless=1`. 
+The frequency of saves can be set with the `--save_every` argument.
+
+
 
 
