@@ -1,4 +1,12 @@
-# Calligraph
+``` python 
+)   ___
+(__/_____)     /) /) ,                 /)
+  /       _   // //    _   __  _  __  (/
+ /       (_(_(/_(/__(_(_/_/ (_(_(_/_)_/ )_
+(______)             .-/       .-/
+                    (_/       (_/
+```
+
 Code for the paper:
 ### Neural Image Abstraction Using Long Smoothing B-Splines
 *Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir*
