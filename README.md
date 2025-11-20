@@ -23,7 +23,7 @@ The repository also contains code for the paper:
 ### Image-Driven Robot Drawing with Rapid Lognormal Movements
 *Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie*
 
-This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting (file [dslm.py](./calligraph.dslm.py)).
+This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting movements (file [dslm.py](./calligraph.dslm.py) and demos including "slm" in the filename).
 
 If you use this specific part of the code for academic purposes, please cite:
 
@@ -39,7 +39,7 @@ If you use this specific part of the code for academic purposes, please cite:
 
 ## Licence
 - The code/software in this repository is licensed under the *GNU GPLv3* (see [LICENCE](./LICENCE)). 
-- You are encouraged to credit *Daniel Berio* (@colormotor) if using this software for artistic/creative outputs.
+- *Artistic/Creative Use (Optional Attribution)*: This system is also rooted in an artistic research and practice component. If you use it for artistic or creative work, please consider mentioning/crediting Daniel Berio (@colormotor).
 
 ## Conda (recommended)
 The ideal way to get this working is installing the conda/mamba package manager through miniforge. On Mac/Linux, from a terminal do
@@ -92,6 +92,11 @@ python demo_area_fill_01.py --smoothing_w=10
 ```
 
 Will the set the value of the corresponding variable declared inside the `params()` function.
+
+
+## Performance
+The demos use a Matplotlib animation to show the results. This is heavily un-optimized and can slow down optimization time. You can run the demos without displaying each step by running the demos with the option `--headless=1`. 
+The frequency of saves can be set with the `--save_every` argument.
 
 
 

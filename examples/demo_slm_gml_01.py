@@ -60,6 +60,9 @@ def params():
 
     stroke_w = 3
     vary_width = 0
+
+    save_every = 10
+
     return locals()
 
 cfg = util.ConfigArgs(params())
@@ -260,8 +263,8 @@ def frame(step):
     plut.overlay_bar(ax, curt/start_time)
 
     if saver.valid:
-        save_every = 10
-        if step%save_every == save_every-1 or cfg.num_opt_steps==1:
+        
+        if step%cfg.save_every == cfg.save_every-1 or cfg.num_opt_steps==1:
             scene.save_json(saver.with_ext('.json'), startup_paths=startup_paths, input_paths=S)
             plut.figure_image().save(saver.with_ext('.png'))
             saver.copy_file()

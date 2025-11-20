@@ -39,8 +39,6 @@ def params():
     image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/elephant.jpg')
     image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/SEAGULL.jpg')
 
-    #image_path = os.path.expanduser('./data/spock256.jpg') # ~/Dropbox/transfer_box/data/calligraph/grey.jpg')
-
     output_path = './outputs'
 
     # By default assume that the input filename contains the string
@@ -105,7 +103,6 @@ img = np.array(input_img)/255
 ##############################################
 # Settings
 verbose = False
-
 util.seed_everything(cfg.seed)
 
 ##############################################
@@ -266,7 +263,6 @@ def frame(step):
     plt.subplot(gs[0,0])
     plt.title('Startup - seed:%d'%cfg.seed)
     amt = 1.0
-    #mseim =(mse.target.detach().cpu().numpy() + mse.im.detach().cpu().numpy())/2
     plt.imshow(first_frame*amt + target_img*(1-amt), cmap='gray', vmin=0, vmax=1)
     plut.setup(box=geom.make_rect(0, 0, w, h), axis=True)
 

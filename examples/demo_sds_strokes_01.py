@@ -121,6 +121,7 @@ def params():
     suffix = ""
 
     image_movie = True
+    save_every = 10
 
     return locals()
 
@@ -368,8 +369,8 @@ def frame(step):
     elapsed = time.perf_counter() - perf_t
     time_count += elapsed
 
-    save_every = 10
-    must_save = step % save_every == save_every - 1 or cfg.num_opt_steps == 1
+    
+    must_save = step % cfg.save_every == cfg.save_every - 1 or cfg.num_opt_steps == 1
     must_show = True
 
     if must_show:
