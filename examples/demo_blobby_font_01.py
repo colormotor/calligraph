@@ -430,8 +430,7 @@ def frame(step):
     z = 0
 
     plt.subplot(gs[0,2])
-    must_resolve = []
-    print('Resolve: ', resolve)
+    
     with torch.no_grad():
         S = []
         for i, group in enumerate(scene.shape_groups):
@@ -443,15 +442,7 @@ def frame(step):
                 Q = points.detach().cpu().numpy()
                 X = path.samples(len(Q)*10).detach().cpu().numpy()
                 S.append(X)
-                if resolve:
-                    S1 = clipper.intersection(X, X, clip_type='evenodd')
-                    S2 = clipper.union(X, X, clip_type='evenodd')
-                    if len(S1) > 1 or len(S2) > 1:
-                        must_resolve.append(path)
-                        plut.stroke(S1, 'm', closed=True, zorder=100000)
-                        print("Removing self intersections")
-                    else:
-                        pass #plut.stroke(S, 'g', closed=True, lw=1.5, zorder=z+2) #, zorder=100000)
+    
 
         plut.fill(S, 'k')
         plut.stroke(S, 'k', lw=cfg.stroke_w*0.5, closed=True)
@@ -462,56 +453,9 @@ def frame(step):
             plut.fill(compl, 'k')
             plut.fill(complement, 'k')
 
-    if must_resolve:
-        #optimizers[0].zero_grad(set_to_none=True)
-        with torch.no_grad():
-            for path in must_resolve:
-                points = path.param('points')
-                Q = points.detach().cpu().numpy()
-                S = clipper.simplify_polygon(Q)
-                #S = clipper.intersection(Q, Q, clip_type='evenodd')
-                Q2 = S[np.argmax([abs(geom.chord_length(P)) for P in S])]
-                if np.sign(geom.polygon_area(Q2)*geom.polygon_area(Q)) < 0:
-                    Q2 = Q2[::-1]
-                distances = np.linalg.norm(Q2 - Q[0], axis=1)
-                best_start = np.argmin(distances)
-                Q = np.roll(Q2, -best_start, axis=0)
-
-                plut.stroke(Q, 'c', closed=True, zorder=100000)
-                #print('cl', geom.chord_length(Q), 'mincl', np.min(geom.chord_lengths(Q)))
-                #Q = geom.cleanup_contour(Q, eps=1e-3, closed=True)
-                new_points = torch.from_numpy(Q).to(torch.float32).to(device)
-                #path.params['points'].data = torch.from_numpy(Q).to(torch.float32).to(device)
-                new_points.requires_grad = True
-                path.params['points'] = new_points
-                points.requires_grad = False
-                path.setup()
-                path.refresh()
-
-                # # Replace in point opt
-                opt = optimizers[0]
-                for param_group in opt.param_groups:
-                    for j, param in enumerate(param_group['params']):
-                        if param is points:
-                            param_group['params'][j] = new_points
-                            #pdb.set_trace()
-            # old_opt = optimizers[0]
-            # old_lr = old_opt.param_groups[0]['lr']
-            # optimizers[0] = Opt(scene.get_points(), lr=old_lr)
-            # del old_opt
-            #schedulers[0].optimizer = optimizers[0]
-        #optimizers[0] = Opt(scene.get_points(), lr=cfg.lr_shape)
-        #del old_opt
-        #torch.cuda.empty_cache()
-
-    #must_resolve = []
-
-
-
     if losses.has_loss('curv'):
         plut.fill_circle([cfg.target_radius, cfg.target_radius], cfg.target_radius, 'c')
 
-    #plt.legend()
     plut.setup(box=geom.make_rect(0, 0, w, h))
 
     # plt.subplot(gs_sub[0])
