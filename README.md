@@ -40,7 +40,7 @@ If you use this specific part of the code for academic purposes, please cite:
 
 ## Licence
 - The code/software in this repository is licensed under the *GNU GPLv3* (see [LICENCE](./LICENCE)). 
-- *Artistic/Creative Use (Optional Attribution)*: This system is also rooted in an artistic research and practice component. If you use it for artistic or creative work, please consider mentioning/crediting Daniel Berio (@colormotor).
+- *Artistic/Creative Use* (optional attribution): This system is also rooted in an artistic research and practice component. If you use it for artistic or creative outputs, please consider mentioning/crediting Daniel Berio (@colormotor).
 
 ## Conda (recommended)
 The ideal way to get this working is installing the conda/mamba package manager through miniforge. On Mac/Linux, from a terminal do
