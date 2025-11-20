@@ -31,40 +31,22 @@ device = config.device
 dtype = torch.float32
 
 def params():
-    has_dropbox = os.path.isdir(os.path.expanduser('~/Dropbox/transfer_box/real'))
-    if has_dropbox:
-        output_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/outputs/'
-    else:
-        output_path = './generated/tests'
-
+    output_path = './generated/tests'
     save = 1
 
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/bunny-sil.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/giraffe.jpg'
-    text = 'GIRAFFE'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/sil-siggraph.jpg'
-    text = 'SIGGRAPH'
+    image_path = './data/silhouettes/SEAGULL.jpg'
+    # If the following is blank assume `SEAGULL_layout.json` has been created
+    # using `calligram_layout.py`
+    layout_svg = '' 
 
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-siggraph.jpg'
-    text = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-siggraph.svg'
-
-
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/sil-bunny-gpt.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/sil-yoga.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-camel.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/bunny-sil.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/giraffe.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/umbrella.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/elephant.jpg'
-    image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/SEAGULL.jpg'
-    text = '.svg'
+    #image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/elephant.jpg'
     #text = '/home/danielberio/Dropbox/transfer_box/data/calligraph/elephant.svg'
+
     # name = 'bunny1'
     # image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-%s.jpg'%name
     #text = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-%s.svg'%name
 
-
-    image_alpha = 1 #0.9
+    image_alpha = 1 
     
     stroke_w = 0.0 
     minw, maxw = 0.5, 2  # stroke width range
@@ -139,13 +121,11 @@ sz, _ = input_img.size
 box = geom.make_rect(0, 0, sz, sz)
 
 
-has_svg = os.path.isfile(cfg.text)
 layout_file = os.path.splitext(cfg.image_path)[0] + '_layout.json'
 # If the layout file exists and we did not explictly define an init svg
 # Load layout
-if os.path.isfile(layout_file) and not has_svg:
+if os.path.isfile(layout_file) and not cfg.layout_svg:
     data = fs.load_json(layout_file)
-    cfg.text = data['text']
     transforms = [np.array(mat) for mat in data['transforms']]
     outlines = []
     for S, tsm in zip(data['glyphs'], transforms):
@@ -153,7 +133,7 @@ if os.path.isfile(layout_file) and not has_svg:
         outlines += S
 else:
     # Else asume we provided a layout in cfg.text
-    outlines = svg.load_svg(cfg.text)
+    outlines = svg.load_svg(cfg.layout_svg)
     outlines = geom.fix_shape_winding(outlines)
 
 # Use the input (either layout or SVG) as a target image for OCR
