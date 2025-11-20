@@ -1,7 +1,8 @@
 # Calligraph
 ![header](./header.jpg)
-### Neural Image Abstraction Using Long Smoothing B-Splines
-*Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir*
+
+<h3>Neural Image Abstraction Using Long Smoothing B-Splines</h3>
+<p><em>Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir</em></p>
 
 The system allows optimization of B-splines using a geometric smoothing cost on high positional derivatives withing a differentiable vector graphics pipeline. 
 
