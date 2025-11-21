@@ -9,6 +9,8 @@
                     (_/       (_/
 
 Losses applied to spline geometry
+
+© Daniel Berio (@colormotor) 2025
 """
 
 import numpy as np

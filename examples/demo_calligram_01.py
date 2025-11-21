@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+'''
+Neural Image Abstraction Using Long Smoothing B-Splines
+DEMO:
+Generate calligram for a given silhouette image and text layout
+'''
 
 from importlib import reload
 import numpy as np
@@ -42,8 +47,8 @@ def params():
     layout_svg = '' 
 
     # Alternatively a layout can be designed manually as a svg file.
-    image_path = './data/silhouettes/elephant.jpg'
-    layout_svg = './data/silhouettes/elephant.svg'
+    # image_path = './data/silhouettes/elephant.jpg'
+    # layout_svg = './data/silhouettes/elephant.svg'
 
     image_alpha = 1 
     

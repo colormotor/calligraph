@@ -1,3 +1,9 @@
+'''
+Neural Image Abstraction Using Long Smoothing B-Splines
+DEMO:
+Quantized color vectorization
+'''
+
 from importlib import reload
 import numpy as np
 import matplotlib.pyplot as plt
@@ -114,16 +120,7 @@ def params():
     if chans != 3:
         lab = False
 
-    palette_im = os.path.expanduser("~/Dropbox/transfer_box/data/calligraph/pat5.jpg")
-    palette_im = os.path.expanduser("~/Dropbox/transfer_box/data/calligraph/hk4.jpg")
-    palette_im = os.path.expanduser(
-        "~/Dropbox/transfer_box/data/calligraph/camo-blue.jpg"
-    )
-    palette_im = os.path.expanduser(
-        "~/Dropbox/transfer_box/data/calligraph/palettes/swirl3.png"
-    )
-    palette_im = os.path.expanduser("~/Dropbox/transfer_box/data/calligraph/camo8.jpg")
-    palette_im = os.path.expanduser("~/Dropbox/transfer_box/data/calligraph/camo11.jpg")
+    palette_im = './data/palettes/swirl2.png'
     num_colors = 7
     gumbel_hard = 0
     tau_start = 1.0

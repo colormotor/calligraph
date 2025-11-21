@@ -8,6 +8,8 @@
                     (_/       (_/
 
 B-Spline construction+smoothing utilities
+
+© Daniel Berio (@colormotor) 2025
 '''
 
 import numpy as np

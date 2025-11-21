@@ -1,3 +1,10 @@
+'''
+Image-Driven Robot Drawing with Rapid Lognormal Movements
+DEMO:
+Fit Sigma-lognrmal trajectories to an image
+Graffiti Markup Languge input (see https://000000book.com)
+'''
+
 from importlib import reload
 import numpy as np
 import matplotlib.pyplot as plt
@@ -118,9 +125,6 @@ for P in startup_paths:
                      split_primitives=True )
     paths.append(path)
 
-
-# Opt = torch.optim.Adam #Adam
-# Opt = lambda params, lr: torch.optim.Adam(params, lr, betas=(0.9, 0.9), eps=1e-6)
 
 ##############################################
 # Optimization
@@ -268,7 +272,5 @@ def frame(step):
             scene.save_json(saver.with_ext('.json'), startup_paths=startup_paths, input_paths=S)
             plut.figure_image().save(saver.with_ext('.png'))
             saver.copy_file()
-
-
 
 plut.show_animation(fig, frame, cfg.num_opt_steps, filename=saver.with_ext('.mp4'))

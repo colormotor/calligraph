@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+'''
+Adaptation of the Sigma-lognormal model for differentiable rasterization with DiffVG
+Main implementation of
+Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie
+(2025)
+*Image-Driven Robot Drawing with Rapid Lognormal Movements*
+
+Use with the DiffVG scene wrapper in `diffvg_utils.py`
+
+© Daniel Berio (@colormotor) 2025
+'''
 
 import numpy as np
 import matplotlib.pyplot as plt

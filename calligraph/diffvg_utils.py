@@ -13,6 +13,7 @@ added to a Scene object. Shape parameters can be set as a tuple, with first
 parameter specifying the initial value (can be numpy or list) and second value a
 boolean that specifies if the parameter has gradients
 
+© Daniel Berio (@colormotor) 2025
 """
 
 import torch

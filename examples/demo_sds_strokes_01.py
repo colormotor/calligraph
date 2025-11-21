@@ -1,4 +1,5 @@
 '''
+Neural Image Abstraction Using Long Smoothing B-Splines
 DEMO:
 Stroke-based image abstaction with score distillation sampling
 '''

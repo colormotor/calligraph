@@ -271,13 +271,15 @@ def frame(step):
     opt.plot(50)
     
     transforms = [tsm.shape_to_canvas().detach().cpu().numpy() for tsm in scene.transforms]
-    if saver.valid:
+
+    if cfg.save:
         if step%cfg.save_every == cfg.save_every-1 or cfg.num_opt_steps==1:
-            scene.save_json(saver.with_ext('.json'), transforms=transforms, glyphs=glyphs_centered, text=cfg.text)
+            if saver.valid:
+                scene.save_json(saver.with_ext('.json'), transforms=transforms, glyphs=glyphs_centered, text=cfg.text)
+                plut.figure_image(adjust=False).save(saver.with_ext('.png'))
+                saver.copy_file()
             layout_file = os.path.splitext(cfg.image_path)[0] + '_layout.json'
             fs.save_json({'glyphs':glyphs_centered, 'transforms':transforms, 'text':cfg.text}, layout_file)
-            plut.figure_image(adjust=False).save(saver.with_ext('.png'))
-            saver.copy_file()
 
 
 plut.show_animation(fig, frame, cfg.num_opt_steps, filename=saver.with_ext('.mp4'), headless=cfg.headless)
