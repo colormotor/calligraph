@@ -29,17 +29,11 @@ dtype = torch.float32
 
 def params():
     save_every = 10
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sil-bunny-gpt.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/comp-giraffe.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/sil-yoga.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/comp-camel.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/bunny-sil.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/giraffe.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/umbrella.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/elephant.jpg')
-    image_path = os.path.expanduser('~/Dropbox/transfer_box/data/calligraph/SEAGULL.jpg')
-
-    output_path = './outputs'
+    # NB output the layout will be created in the same directory as the image
+    # E.g. elphant.jpg will become elphant_layout.json
+    image_path = './data/silhouettes/SEAGULL.jpg' 
+    image_path = './data/silhouettes/elephant.jpg' 
+    output_path = './generated'
 
     # By default assume that the input filename contains the string
     text = os.path.splitext(os.path.basename(image_path))[0] # 
@@ -181,7 +175,7 @@ opt.add_loss('mse',
                  inputs=('im', 'input_img', 'mse_mul'))
 
 def curvature(points):
-    closed= cfg.closed
+    closed= False #cfg.closed
     points = points[:,:2]
     length = len(points)
 
@@ -281,7 +275,7 @@ def frame(step):
         if step%cfg.save_every == cfg.save_every-1 or cfg.num_opt_steps==1:
             scene.save_json(saver.with_ext('.json'), transforms=transforms, glyphs=glyphs_centered, text=cfg.text)
             layout_file = os.path.splitext(cfg.image_path)[0] + '_layout.json'
-            files.save_json({'glyphs':glyphs_centered, 'transforms':transforms, 'text':cfg.text}, layout_file)
+            fs.save_json({'glyphs':glyphs_centered, 'transforms':transforms, 'text':cfg.text}, layout_file)
             plut.figure_image(adjust=False).save(saver.with_ext('.png'))
             saver.copy_file()
 

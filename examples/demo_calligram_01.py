@@ -31,7 +31,7 @@ device = config.device
 dtype = torch.float32
 
 def params():
-    output_path = './generated/tests'
+    output_path = './generated'
     save = 1
 
     image_path = './data/silhouettes/SEAGULL.jpg'
@@ -39,8 +39,8 @@ def params():
     # using `calligram_layout.py`
     layout_svg = '' 
 
-    #image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/elephant.jpg'
-    #text = '/home/danielberio/Dropbox/transfer_box/data/calligraph/elephant.svg'
+    image_path = './data/silhouettes/elephant.jpg'
+    # layout_svg = './data/silhouettes/elephant.svg'
 
     # name = 'bunny1'
     # image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-%s.jpg'%name
@@ -50,14 +50,14 @@ def params():
     
     stroke_w = 0.0 
     minw, maxw = 0.5, 2  # stroke width range
-    degree =  5 #5 #5
+    degree =  5 
     deriv = 2
     multiplicity = 1
     b_spline = True
     pspline = False
     ref_size_factor = 1.0
 
-    lr_shape = 1.0 #1.5 
+    lr_shape = 1.0 #1.2 #1.5 
     num_opt_steps = 250 
     
     # OCR: no cls, av pool
@@ -67,7 +67,7 @@ def params():
     pool_no_cls = True
 
     if use_ocr:
-        ocr_w = 400 
+        ocr_w = 200 
         if force_cls:
             ocr_w = 5000
     else:
@@ -76,10 +76,10 @@ def params():
     
     ablation = ''
 
-    smoothing_w = 13000 
+    smoothing_w = 10000 
 
     repulsion_subd = 10 
-    repulsion_w = 10000 
+    repulsion_w = 18000 
     repulsion_d = 10 #7
 
     ds = 12 
@@ -148,7 +148,7 @@ def opening(S, amt):
 im = np.array(input_img)/255
 ctrs = clipper.multi_union([imaging.find_contours(1-im)]*2)
 if cfg.offset:
-    area = ctrs 
+    area = opening(ctrs, cfg.offset)
     complement = clipper.difference(ctrs, opening(ctrs, cfg.offset)) 
 else:
     area = ctrs
@@ -169,7 +169,6 @@ outlines = [geom.uniform_sample(P, cfg.ds, closed=True) for P in outlines]
 ##############################################
 # Settings
 verbose = False
-overlap = False
 ref_size = w/cfg.ref_size_factor
 offset_variance = [ref_size, ref_size]
 closed = True
@@ -216,15 +215,8 @@ opt = diffvg_utils.SceneOptimizer(
     lr_min_scale=0.5
 )
 
-
-# schedulers = [util.step_cosine_lr_scheduler(opt, 0.0, 0.5, cfg.num_opt_steps) for opt in optimizers]
-# #schedulers = []
-
 ##############################################
 # Losses
-
-
-losses = util.MultiLoss(verbose=verbose)
 
 opt.add_loss(
     "mse",
@@ -341,22 +333,18 @@ def frame(step):
 
 
         plt.subplot(gs[0,1])
-        if losses.has_loss('sds'):
-            plt.title('Step %d, t %d, %s' %(step, int(sds.t_saved), lrs))
-        else:
-            plt.title('Step %d, %s'%(step, lrs))
-        #plt.title('Step %d'%step)
+        plt.plot('Coverage')
+        plt.title('Step %d, %s'%(step, lrs))
         plt.imshow(im*amt + mse_img*(1-amt), cmap='gray', vmin=0, vmax=1)
 
         z = 0
 
         plt.subplot(gs[0,2])
+        plt.title('Preview')
         with torch.no_grad():
             S = []
             for i, group in enumerate(scene.shape_groups):
-                #clr = np.ones(3)*quantized_hard[i] #  group.fill_color.detach().cpu().numpy()
                 clr = np.ones(3)*group.fill_color.detach().cpu().numpy()
-                #clr = np.ones(3)*colors[i].detach().cpu().numpy()
                 for path in group.shapes:
                     points = path.param('points')
                     Q = points.detach().cpu().numpy()
@@ -366,6 +354,13 @@ def frame(step):
             plut.fill(S, 'k')
             plut.stroke(S, 'k', lw=cfg.stroke_w*0.5, closed=True)
             if cfg.offset > 0:
+                            
+                S = clipper.union(S, S)
+                # Quite un-ideal way to add missing parts to the calligram
+                S = clipper.offset(clipper.offset(S, cfg.offset*3, join_type='round'), -(cfg.offset*3*0.8), join_type='round')
+                compl = clipper.difference(ctrs, S)
+                plut.fill(compl, 'k')
+                
                 plut.fill(complement, 'k')
 
         plut.setup(box=geom.make_rect(0, 0, w, h))

@@ -37,7 +37,7 @@ def params():
     # Currently requires booleans to be 0 or 1 to work from cmd-line
 
     verbose = 0
-    output_path = './generated/tests'
+    output_path = './generated'
 
     text = 'G'
     size = 256
