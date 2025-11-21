@@ -36,15 +36,14 @@ def params():
 
     image_path = './data/silhouettes/SEAGULL.jpg'
     # If the following is blank assume `SEAGULL_layout.json` has been created
-    # using `calligram_layout.py`
+    # use `calligram_layout.py`to generate layouts in the same directory as a given image
+    # E.g. `python calligram_layout.py --image_path=./data/silhouettes/elephant.jpg'
+    # Will generate `elephant_layout.json` in the same directory as the image
     layout_svg = '' 
 
+    # Alternatively a layout can be designed manually as a svg file.
     image_path = './data/silhouettes/elephant.jpg'
-    # layout_svg = './data/silhouettes/elephant.svg'
-
-    # name = 'bunny1'
-    # image_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-%s.jpg'%name
-    #text = '/home/danielberio/Dropbox/transfer_box/data/calligraph/comp-%s.svg'%name
+    layout_svg = './data/silhouettes/elephant.svg'
 
     image_alpha = 1 
     
