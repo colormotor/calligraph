@@ -1,7 +1,7 @@
 # Calligraph
 ![header](./header.jpg)
 
-### Neural Image Abstraction Using Long Smoothing B-Splines
+### [Neural Image Abstraction Using Long Smoothing B-Splines](https://colormotor.github.io/calligraph-page/)
 *Daniel Berio, Michael Stroh, Sylvain Calinon, Frederic Fol Leymarie, Oliver Deussen, Ariel Shamir*
 
 The system allows optimization of B-splines using a geometric smoothing cost on high positional derivatives withing a differentiable vector graphics pipeline. 
@@ -24,7 +24,7 @@ The repository also contains code for the paper:
 ### Image-Driven Robot Drawing with Rapid Lognormal Movements
 *Daniel Berio, Guillaume Clivaz, Michael Stroh, Oliver Deussen, Sylvain Calinon, Réjean Plamondon, Frederic Fol Leymarie*
 
-This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting movements (file [dslm.py](./calligraph.dslm.py) and demos including "slm" in the filename).
+This paper follows a similar approach to enable minimum-time smoothing of trajectories described using the Sigma-lognormal model of handwriting movements (file [dslm.py](./calligraph/dslm.py) and demos including "slm" in the filename).
 
 If you use this specific part of the code for academic purposes, please cite:
 
