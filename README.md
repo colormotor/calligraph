@@ -58,7 +58,7 @@ You can replace `calligraph` with any name of your preference. Activate the env:
 
 Then proceed with the following dependencies. If using conda/mamba you may want to install these beforehand:
 
-    mamba install numpy scipy matplotlib opencv scikit-image
+    mamba install numpy scipy matplotlib opencv scikit-image cmake protobuf ninja
 
 making sure your environment is active.
     
@@ -72,7 +72,7 @@ making sure your environment is active.
         -   `git submodule update --init --recursive` and then
         -   `python setup.py install`
 -   Install remaining deps with pip:
-    - `pip install accelerate transformers diffusers ortools open-clip-torch pyclipper freetype-py svgpathtools`
+    - `pip install accelerate transformers diffusers ortools open-clip-torch pyclipper freetype-py svgpathtools cssutils`
 
 
 ## Install locally
