@@ -15,7 +15,7 @@ from . import geom, segmentation, imaging
 from easydict import EasyDict as edict
 import numpy as np
 import pdb
-from PIL import ImageOps
+from PIL import ImageOps, Image
 
 
 def softmax(x, tau=0.2):
