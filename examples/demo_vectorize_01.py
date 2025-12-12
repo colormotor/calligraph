@@ -87,7 +87,7 @@ def params():
     pspline = 0  # If 1 (true) use discrete penalized spline_points
 
     num_voronoi_points = 50
-    ds = 7
+    ds = 5
     lr_shape = 2.0
     lr_min_scale = 0.7
     lr_color = 1e-2
@@ -112,7 +112,7 @@ def params():
     grad_method = "sds"
     grad_method = "ism"
 
-    smoothing_w = 0.5
+    smoothing_w = 5.0 #0.5
 
     lab = False
     K = 3
@@ -120,7 +120,7 @@ def params():
     if chans != 3:
         lab = False
 
-    palette_im = './data/palettes/swirl2.png'
+    palette_im = './data/palettes/camo11.jpg'
     num_colors = 7
     gumbel_hard = 0
     tau_start = 1.0
