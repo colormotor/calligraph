@@ -77,9 +77,12 @@ def to_palette(im, n):
 # Config
 def params():
     output_path = "./outputs"
+    output_path = '/home/danielberio/Dropbox/transfer_box/data/calligraph/outputs/'
+
     save = True
     filename = "./data/bach.jpg"
-
+    filename = "./data/spock.jpg"
+    
     degree = 5  # Spline degree
     deriv = 3  # Smoothing degrees
     multiplicity = 1  # Keypoint multiplicity
@@ -87,7 +90,7 @@ def params():
     pspline = 0  # If 1 (true) use discrete penalized spline_points
 
     num_voronoi_points = 50
-    ds = 5
+    ds = 7 # 5
     lr_shape = 2.0
     lr_min_scale = 0.7
     lr_color = 1e-2
@@ -112,7 +115,7 @@ def params():
     grad_method = "sds"
     grad_method = "ism"
 
-    smoothing_w = 5.0 #0.5
+    smoothing_w = 100.0 # 50.0 #5.0 #0.5
 
     lab = False
     K = 3
@@ -120,12 +123,13 @@ def params():
     if chans != 3:
         lab = False
 
+        
     palette_im = './data/palettes/camo11.jpg'
     num_colors = 7
     gumbel_hard = 0
     tau_start = 1.0
 
-    style_w = 10.0
+    style_w = 15.0 #50.0  #50.0 #100.0
     style_path = ""
     stroke_w = 0.0
     stroke_darkness = 0.5
@@ -480,7 +484,7 @@ def frame(step):
     #     P = Q[::multiplicity]
     #     plut.stroke(P, 'r', lw=1.3, label='Keypoints' if i==0 else '', alpha=0.5)
     #     plut.stroke(Q, 'c', lw=0.5, label='Control Polygon' if i==0 else '', alpha=0.5)
-    plut.setup(box=geom.make_rect(0, 0, w, h), axis=True)
+    plut.setup(box=geom.make_rect(0, 0, w, h), axis=False)
 
     plt.subplot(gs[0, 1])
     if opt.has_loss("sds"):
@@ -489,7 +493,8 @@ def frame(step):
         plt.title("Step %d, tau %.2f lr %s" % (step, tau, lrs))
     # plt.title('Step %d'%step)
     plt.imshow((im * 255).astype(np.uint8))  # , cmap='gray', vmin=0, vmax=1)
-
+    plut.setup(box=geom.make_rect(0, 0, w, h), axis=False)
+    
     plt.subplot(gs[0, 2])
     bg = np.ones((h, w, 3)) * quantized_hard[-1]
     plt.imshow(bg, vmin=0, vmax=1)
@@ -550,7 +555,7 @@ def frame(step):
                 indices=indices[:-1],
             )
             cfg.save_yaml(saver.with_ext(".yaml"))
-            plut.figure_image().save(saver.with_ext(".png"))
+            plut.figure_image(adjust=False).save(saver.with_ext(".png"))
             saver.log_image("output", plt.gcf())
             saver.copy_file()
 
