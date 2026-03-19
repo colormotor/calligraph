@@ -72,7 +72,7 @@ making sure your environment is active.
         -   `git submodule update --init --recursive` and then
         -   `python setup.py install`
 -   Install remaining deps with pip:
-    - `pip install accelerate transformers diffusers "ortools<9.13" open-clip-torch pyclipper freetype-py svgpathtools cssutils`
+    - `pip install accelerate transformers diffusers "ortools<9.11" open-clip-torch pyclipper freetype-py svgpathtools cssutils`
 
 
 ## Install locally
